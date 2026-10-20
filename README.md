@@ -131,8 +131,8 @@ Design and implementation audits live in the `NEXA_*.md` documents and [`docs/`]
 1. Bump `version` in `package.json`.
 2. Tag and push:
    ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
+   git tag v0.1.1
+   git push origin v0.1.1
    ```
 3. The [Release workflow](.github/workflows/release.yml) builds on Windows, macOS and Linux runners and uploads the installers to a GitHub Release.
 

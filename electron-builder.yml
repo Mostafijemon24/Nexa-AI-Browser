@@ -4,6 +4,7 @@ publish:
   provider: github
   owner: Mostafijemon24
   repo: Nexa-AI-Browser
+  releaseType: release
 directories:
   output: dist
 files:
@@ -13,9 +14,14 @@ asar: true
 mac:
   category: public.app-category.productivity
   icon: assets/nexa-icon.png
-  # Signing readiness (inert without a Developer ID identity + notarization creds).
-  # electron-builder skips signing entirely when no identity is available, so
-  # unsigned local packaging still works; these activate for a real release.
+  # Build UNSIGNED by default: identity null skips code signing (and notarize
+  # false skips notarization) so CI produces a working .dmg/.zip without any
+  # Apple Developer credentials. To ship a signed, notarized build, remove
+  # `identity: null`, set `notarize: true`, and provide the signing secrets
+  # (CSC_LINK / CSC_KEY_PASSWORD / APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD /
+  # APPLE_TEAM_ID) described in the README.
+  identity: null
+  notarize: false
   hardenedRuntime: true
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
@@ -29,6 +35,9 @@ win:
     - nsis
 linux:
   icon: assets/nexa-icon.png
+  # Required for the .deb maintainer field (we keep a no-reply address so no
+  # personal email is published).
+  maintainer: Mostafijemon24 <74888790+Mostafijemon24@users.noreply.github.com>
   target:
     - AppImage
     - deb
