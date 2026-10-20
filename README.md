@@ -54,7 +54,7 @@ Ready-to-use installers for **Windows, macOS and Linux** are published on the re
 |---|---|
 | 🪟 Windows | `NEXA-Setup-<version>.exe` (NSIS installer) |
 | 🍎 macOS (Apple Silicon) | `NEXA-<version>-arm64.dmg` / `NEXA-<version>-arm64-mac.zip` |
-| 🍎 macOS (Intel) | `NEXA-<version>-x64.dmg` / `NEXA-<version>-x64-mac.zip` |
+| 🍎 macOS (Intel) | `NEXA-<version>.dmg` / `NEXA-<version>-mac.zip` |
 | 🐧 Linux | `NEXA-<version>.AppImage` / `nexa_<version>_amd64.deb` |
 
 > Builds are produced automatically by the [Release workflow](.github/workflows/release.yml) whenever a version tag is pushed. They are **ad-hoc signed** (not notarized) unless code-signing certificates are configured as repository secrets (see [Releasing](#releasing)), so the OS shows a warning on first launch — follow the steps below.
