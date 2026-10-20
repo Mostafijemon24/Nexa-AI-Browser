@@ -3,8 +3,16 @@
   "productName": "NEXA",
   "version": "0.1.0",
   "description": "The open-source AI browser built around downloads",
-  "author": "NEXA",
+  "author": "Mostafijemon24",
   "license": "MIT",
+  "homepage": "https://github.com/Mostafijemon24/Nexa#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mostafijemon24/Nexa.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Mostafijemon24/Nexa/issues"
+  },
   "main": "./out/main/index.js",
   "type": "module",
   "scripts": {

@@ -1,5 +1,9 @@
 appId: org.nexa.browser
 productName: NEXA
+publish:
+  provider: github
+  owner: Mostafijemon24
+  repo: Nexa
 directories:
   output: dist
 files:

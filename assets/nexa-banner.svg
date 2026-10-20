@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="280" viewBox="0 0 1000 280" role="img" aria-label="NEXA — the open-source AI browser built around downloads">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0f17"/>
+      <stop offset="0.55" stop-color="#121826"/>
+      <stop offset="1" stop-color="#1b2740"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4f8cff"/>
+      <stop offset="1" stop-color="#7c5cff"/>
+    </linearGradient>
+    <linearGradient id="word" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#c9d6ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="280" rx="20" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1000" height="6" rx="3" fill="url(#accent)"/>
+  <!-- glyph: a downward arrow (downloads) inside a rounded shield (protect) -->
+  <g transform="translate(70,78)">
+    <rect x="0" y="0" width="124" height="124" rx="30" fill="none" stroke="url(#accent)" stroke-width="6"/>
+    <path d="M62 26 V86 M40 64 L62 88 L84 64" fill="none" stroke="url(#accent)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="34" y="98" width="56" height="8" rx="4" fill="url(#accent)"/>
+  </g>
+  <text x="230" y="150" font-family="'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif" font-size="92" font-weight="700" letter-spacing="6" fill="url(#word)">NEXA</text>
+  <text x="232" y="196" font-family="'IBM Plex Mono','SFMono-Regular',Menlo,monospace" font-size="21" font-weight="500" letter-spacing="1" fill="#9fb0d0">The open-source AI browser, built around downloads.</text>
+  <text x="232" y="228" font-family="'IBM Plex Mono','SFMono-Regular',Menlo,monospace" font-size="15" letter-spacing="3" fill="#5f7399">BROWSE · PROTECT · DOWNLOAD · UNDERSTAND · TRANSFER</text>
+</svg>

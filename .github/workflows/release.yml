@@ -1,0 +1,62 @@
+name: Release
+
+# Build ready-to-use desktop apps for Windows, macOS and Linux and attach them
+# to a GitHub Release. Trigger by pushing a version tag, e.g.
+#   git tag v0.1.0 && git push origin v0.1.0
+# or run manually from the Actions tab (workflow_dispatch).
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write # required to create the Release and upload assets
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: --mac
+          - os: windows-latest
+            platform: --win
+          - os: ubuntu-latest
+            platform: --linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate (typecheck, lint, tests)
+        run: |
+          npm run typecheck
+          npm run lint
+          npm test
+
+      - name: Build and publish desktop app
+        run: npm run build && npx electron-builder ${{ matrix.platform }} --publish always
+        env:
+          # Publishing the Release + assets (provided automatically by Actions).
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # --- Optional code signing ---------------------------------------
+          # electron-builder skips signing when these are absent, so the matrix
+          # still produces working (unsigned) installers out of the box. Add the
+          # secrets in the repo settings to ship signed, OS-trusted builds:
+          #   macOS : CSC_LINK (base64 .p12), CSC_KEY_PASSWORD,
+          #           APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID
+          #   Windows: CSC_LINK (base64 .pfx), CSC_KEY_PASSWORD
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
