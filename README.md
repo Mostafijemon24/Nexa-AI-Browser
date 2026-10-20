@@ -92,7 +92,7 @@ The browser agent and page Q&A use whichever provider is connected.
 |---|---|
 | AI gateway URL | `MAIN_VITE_NEXA_AI_GATEWAY_URL` (build-time, public URL only — never a key) |
 | Local AI | Install Ollama; auto-detected on loopback |
-| VPN | Import a WireGuard config; a signed privileged helper must be installed for real tunnels (see `NEXA_P4_2_SIGNING_AND_INSTALLER.md`) |
+| VPN | Import a WireGuard config; a signed privileged helper must be installed for real tunnels |
 | Google Drive | Connect from the Drive surface (OAuth with PKCE) |
 | Provider keys | **Settings → AI** → stored in OS secure storage |
 
@@ -124,7 +124,7 @@ src/
 server/        optional NEXA AI Gateway (standalone Node service)
 ```
 
-Design and implementation audits live in the `NEXA_*.md` documents and [`docs/`](docs/).
+Design notes and specs live in [`docs/`](docs/).
 
 ## Releasing
 
