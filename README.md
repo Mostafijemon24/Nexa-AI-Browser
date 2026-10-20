@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Mostafijemon24/Nexa/releases/latest"><img src="https://img.shields.io/github/v/release/Mostafijemon24/Nexa?sort=semver&label=download&color=4f8cff" alt="Latest release"/></a>
-  <a href="https://github.com/Mostafijemon24/Nexa/actions/workflows/ci.yml"><img src="https://github.com/Mostafijemon24/Nexa/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
+  <a href="https://github.com/Mostafijemon24/Nexa-AI-Browser/releases/latest"><img src="https://img.shields.io/github/v/release/Mostafijemon24/Nexa-AI-Browser?sort=semver&label=download&color=4f8cff" alt="Latest release"/></a>
+  <a href="https://github.com/Mostafijemon24/Nexa-AI-Browser/actions/workflows/ci.yml"><img src="https://github.com/Mostafijemon24/Nexa-AI-Browser/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-informational" alt="Platforms"/>
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"/>
   <img src="https://img.shields.io/badge/Electron-44-47848F?logo=electron&logoColor=white" alt="Electron 44"/>
@@ -48,7 +48,7 @@ Every capability that needs an external service, a signed helper, or a provider 
 
 Ready-to-use installers for **Windows, macOS and Linux** are published on the releases page:
 
-### ➡️ [Download the latest release](https://github.com/Mostafijemon24/Nexa/releases/latest)
+### ➡️ [Download the latest release](https://github.com/Mostafijemon24/Nexa-AI-Browser/releases/latest)
 
 | OS | File |
 |---|---|
@@ -62,7 +62,7 @@ Ready-to-use installers for **Windows, macOS and Linux** are published on the re
 
 ```bash
 # Requirements: Node.js 22+, npm
-git clone https://github.com/Mostafijemon24/Nexa.git
+git clone https://github.com/Mostafijemon24/Nexa-AI-Browser.git
 cd Nexa
 npm install
 npm run dev      # launch the app in development

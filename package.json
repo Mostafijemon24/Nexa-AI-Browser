@@ -5,13 +5,13 @@
   "description": "The open-source AI browser built around downloads",
   "author": "Mostafijemon24",
   "license": "MIT",
-  "homepage": "https://github.com/Mostafijemon24/Nexa#readme",
+  "homepage": "https://github.com/Mostafijemon24/Nexa-AI-Browser#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Mostafijemon24/Nexa.git"
+    "url": "git+https://github.com/Mostafijemon24/Nexa-AI-Browser.git"
   },
   "bugs": {
-    "url": "https://github.com/Mostafijemon24/Nexa/issues"
+    "url": "https://github.com/Mostafijemon24/Nexa-AI-Browser/issues"
   },
   "main": "./out/main/index.js",
   "type": "module",

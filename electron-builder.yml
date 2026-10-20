@@ -3,7 +3,7 @@ productName: NEXA
 publish:
   provider: github
   owner: Mostafijemon24
-  repo: Nexa
+  repo: Nexa-AI-Browser
 directories:
   output: dist
 files:
