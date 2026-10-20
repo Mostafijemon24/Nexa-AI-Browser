@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildActionMessages, pageContextSystemMessage, REWRITE_MODE_INSTRUCTION, type RewriteMode } from '../../src/shared/ai'
+import { buildActionMessages, pageContextMessages, REWRITE_MODE_INSTRUCTION, type RewriteMode } from '../../src/shared/ai'
 import { UNTRUSTED_OPEN, UNTRUSTED_CLOSE, INJECTION_GUARD } from '../../src/shared/page-content'
 
 describe('buildActionMessages — untrusted content is fenced', () => {
@@ -56,14 +56,20 @@ describe('prompt-injection resistance', () => {
   })
 })
 
-describe('pageContextSystemMessage', () => {
-  it('builds a system message with guard + fenced content + metadata', () => {
-    const m = pageContextSystemMessage({ title: 'My Page', url: 'https://e.com/p', text: 'page body content' })
-    expect(m.role).toBe('system')
-    expect(m.content).toContain(INJECTION_GUARD)
-    expect(m.content).toContain('Title: My Page')
-    expect(m.content).toContain('URL: https://e.com/p')
-    expect(m.content).toContain(UNTRUSTED_OPEN)
-    expect(m.content).toContain('page body content')
+describe('pageContextMessages', () => {
+  it('puts the guard in a system message and the fenced untrusted content in a user message', () => {
+    const msgs = pageContextMessages({ title: 'My Page', url: 'https://e.com/p', text: 'page body content' })
+    expect(msgs).toHaveLength(2)
+    const [sys, usr] = msgs
+    // System role carries the instruction + injection guard, never the page body.
+    expect(sys.role).toBe('system')
+    expect(sys.content).toContain(INJECTION_GUARD)
+    expect(sys.content).not.toContain('page body content')
+    // Untrusted page content is fenced in the lower-authority user role.
+    expect(usr.role).toBe('user')
+    expect(usr.content).toContain('Title: My Page')
+    expect(usr.content).toContain('URL: https://e.com/p')
+    expect(usr.content).toContain(UNTRUSTED_OPEN)
+    expect(usr.content).toContain('page body content')
   })
 })

@@ -56,7 +56,6 @@ export class VaultService {
     const blob = encryptVault(key, [], salt, VAULT_ITERS)
     writeFileSync(this.persist.vaultPath(profileId), JSON.stringify(blob), { mode: 0o600 })
     this.hold(profileId, key, [], autoLockMins)
-    this.sealKey(profileId, key)
     return this.list(profileId)
   }
 
@@ -79,7 +78,6 @@ export class VaultService {
       throw new Error('incorrect_password')
     }
     this.hold(profileId, key, creds, autoLockMins)
-    this.sealKey(profileId, key)
     return this.list(profileId)
   }
 
@@ -109,7 +107,9 @@ export class VaultService {
     const u = this.require(profileId)
     const now = Date.now()
     const cred: Credential = {
-      id: 'c' + now,
+      // Timestamp keeps rough ordering; random suffix prevents id collisions
+      // when two credentials are saved within the same millisecond (e.g. import).
+      id: 'c' + now.toString(36) + randomBytes(5).toString('hex'),
       title: draft.title || draft.origin,
       origin: draft.origin,
       username: draft.username,
@@ -194,12 +194,4 @@ export class VaultService {
     writeFileSync(path, JSON.stringify(blob), { mode: 0o600 })
   }
 
-  private sealKey(profileId: string, key: Buffer) {
-    if (!this.secure.available()) return
-    try {
-      this.secure.set(`vault-key:${profileId}`, key.toString('base64'))
-    } catch {
-      /* memory-only key still works while unlocked */
-    }
-  }
 }

@@ -227,6 +227,9 @@ export class OllamaClient {
         const { done, value } = await reader.read()
         if (done) break
         buf += decoder.decode(value, { stream: true })
+        // Bound the line buffer so a backend streaming without newlines cannot
+        // grow main-process memory without limit.
+        if (buf.length > 1024 * 1024) throw err('bad_response', 'stream_too_large')
         let nl: number
         while ((nl = buf.indexOf('\n')) >= 0) {
           const line = buf.slice(0, nl).trim()

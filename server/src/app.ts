@@ -35,7 +35,7 @@ import type { GatewayConfig, TierLimits } from './config'
 import { hashToken, keyHint, newId, newToken, openCredential, sealCredential } from './crypto'
 import type { GatewayStore } from './db'
 import { GatewayError, asGatewayError } from './errors'
-import { SseWriter, applySecurityHeaders, bearerToken, clientIp, readJson, sendError, sendJson } from './http'
+import { SseWriter, applySecurityHeaders, bearerToken, clientIp, peerIsTrustworthy, readJson, sendError, sendJson } from './http'
 import { ConcurrencyGate, SlidingWindowLimiter, estimateTokens, utcDay } from './limits'
 import type { Logger } from './log'
 import { ModelCatalog, ModelRouter } from './router'
@@ -489,7 +489,11 @@ export function createGateway(deps: GatewayDeps): Gateway {
 
   function handle(req: IncomingMessage, res: ServerResponse): void {
     const ctx: RequestContext = { ip: '', ipHash: '', started: now() }
-    const secure = !!cfg.tls || (cfg.trustProxy && String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https')
+    // Honor X-Forwarded-* only when the direct TCP peer is a loopback/private
+    // address (our own reverse proxy). A direct public client cannot then spoof
+    // its IP or forge the HTTPS gate.
+    const peerTrusted = cfg.trustProxy && peerIsTrustworthy(req.socket.remoteAddress)
+    const secure = !!cfg.tls || (peerTrusted && String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https')
     applySecurityHeaders(res, { hsts: cfg.env === 'production' })
 
     const origin = req.headers.origin
@@ -507,7 +511,7 @@ export function createGateway(deps: GatewayDeps): Gateway {
       }
     }
 
-    ctx.ip = clientIp(req, cfg.trustProxy)
+    ctx.ip = clientIp(req, peerTrusted)
     ctx.ipHash = hashIp(ctx.ip)
     const isHealth = (req.url || '').split('?')[0].replace(/\/+$/, '') === GATEWAY_ROUTES.health
     if (cfg.env === 'production' && !secure && !isHealth) return sendError(res, new GatewayError('FORBIDDEN', 'https_required'))

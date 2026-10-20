@@ -128,6 +128,40 @@ app.whenReady().then(() => {
   // content can never fall back to Electron's permissive defaults.
   applyPermissionPolicy(session.defaultSession)
 
+  // SEC: Electron hardening checklist — enforce webview webPreferences,
+  // confine the app shell, and route new-window requests to the OS browser.
+  app.on('web-contents-created', (_e, contents) => {
+    // Lock down every <webview> the app shell creates: no Node, isolated,
+    // sandboxed, and no app-side preload can be injected via a guest attribute.
+    contents.on('will-attach-webview', (_evt, webPreferences, params) => {
+      delete (webPreferences as { preload?: string }).preload
+      delete (webPreferences as { preloadURL?: string }).preloadURL
+      webPreferences.nodeIntegration = false
+      webPreferences.contextIsolation = true
+      ;(webPreferences as { sandbox?: boolean }).sandbox = true
+      // Guests may only ever be pointed at http(s) content.
+      const src = typeof params.src === 'string' ? params.src : ''
+      if (src && !/^https?:\/\//i.test(src)) params.src = 'about:blank'
+    })
+    // The app shell itself must never navigate away from its own bundle (a
+    // stray link or injected navigation opens externally instead). Guest
+    // <webview> contents are a separate type and keep full navigation.
+    contents.on('will-navigate', (evt, url) => {
+      if (contents.getType() === 'webview') return
+      const devUrl = process.env.ELECTRON_RENDERER_URL
+      const inShell = url.startsWith('file://') || (!!devUrl && url.startsWith(devUrl))
+      if (!inShell) {
+        evt.preventDefault()
+        if (url.startsWith('https://') || url.startsWith('http://')) void shell.openExternal(url)
+      }
+    })
+    // Deny in-app popups everywhere; hand http(s) targets to the OS browser.
+    contents.setWindowOpenHandler((details) => {
+      if (details.url.startsWith('https://') || details.url.startsWith('http://')) void shell.openExternal(details.url)
+      return { action: 'deny' }
+    })
+  })
+
   const platform = createPlatformAdapter()
   const persist = new Persistence(platform)
   const secure = new SecureStorage()

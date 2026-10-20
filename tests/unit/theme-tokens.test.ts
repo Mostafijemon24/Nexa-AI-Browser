@@ -364,7 +364,7 @@ describe('Privacy Center (STEP 7)', () => {
   })
 
   it('is wired into view, palette, click-to-go and settings (all functional)', () => {
-    expect(APP).toContain("tab.view === 'privacy'")
+    expect(APP).toContain("view === 'privacy'")
     expect(APP).toContain('Privacy: Open Privacy Center')
     expect(APP).toContain('setPrivacyProbe(privacyProbeLive)')
     expect(PRIVACY_VIEW).toContain('runPrivacyCheck()')

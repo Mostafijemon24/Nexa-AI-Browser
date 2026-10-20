@@ -34,6 +34,19 @@ function platformKind(): 'macos' | 'windows' | 'linux' {
   return 'linux'
 }
 
+/** Per-connection receive-buffer ceiling (> MAX_MESSAGE_BYTES). A client that
+ * streams data without a newline, or an oversized single frame, is dropped
+ * instead of growing the privileged process's memory without bound. */
+const MAX_HELPER_BUFFER = 256 * 1024
+/** Drop idle sockets so a parked connection cannot pin a slot indefinitely. */
+const SOCKET_IDLE_MS = 30_000
+/** Cap concurrent connections to the privileged helper. */
+const MAX_HELPER_CONNECTIONS = 8
+/** Fixed, minimal PATH for every privileged exec — never the inherited PATH,
+ * so an attacker-influenced environment cannot redirect `wg`/`wg-quick` or the
+ * tools they call (`ip`/`iptables`/`resolvconf`). */
+const SAFE_PATH = process.platform === 'win32' ? process.env.PATH || '' : '/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin:/opt/homebrew/bin'
+
 /** Fixed, validated executable discovery — never a renderer-provided path. */
 function resolveExecutable(candidates: string[], bareName: string): string {
   for (const c of candidates) if (existsSync(c)) return c
@@ -54,7 +67,7 @@ function wgPaths(): { wg: string; wgQuick: string } {
 const realRunner: CommandRunner = {
   run(cmd, args, timeoutMs) {
     return new Promise<CommandResult>((resolve) => {
-      execFile(cmd, args, { timeout: timeoutMs, windowsHide: true, shell: false, env: { PATH: process.env.PATH || '' } }, (err, stdout, stderr) => {
+      execFile(cmd, args, { timeout: timeoutMs, windowsHide: true, shell: false, env: { PATH: SAFE_PATH } }, (err, stdout, stderr) => {
         if (err) {
           const e = err as NodeJS.ErrnoException & { killed?: boolean }
           const spawnError = e.code === 'ENOENT' ? 'enoent' : e.code === 'EACCES' || e.code === 'EPERM' ? 'eacces' : e.killed ? 'timeout' : 'other'
@@ -98,14 +111,31 @@ const deps: HelperDeps = {
   }
 }
 
-/** Wire one bidirectional line-delimited connection through the handler. */
-function serveConnection(write: (line: string) => void): (chunk: string) => void {
+/**
+ * Wire one bidirectional line-delimited connection through the handler.
+ * `onOverflow` fires if the peer exceeds the receive-buffer ceiling (memory-
+ * exhaustion guard); the caller tears the connection down.
+ */
+function serveConnection(write: (line: string) => void, onOverflow?: () => void): (chunk: string) => void {
   let buffer = ''
+  let overflowed = false
   return (chunk: string) => {
+    if (overflowed) return
     buffer += chunk
+    if (buffer.length > MAX_HELPER_BUFFER) {
+      overflowed = true
+      buffer = ''
+      onOverflow?.()
+      return
+    }
     const { messages, rest } = decodeMessages(buffer)
     buffer = rest
-    for (const msg of messages) void handleHelperRequest(msg, deps).then((res) => write(encodeMessage(res)))
+    // Pass the serialized byte length so the handler's MAX_MESSAGE_BYTES cap is
+    // actually enforced server-side (previously rawBytes was never provided).
+    for (const msg of messages) {
+      const rawBytes = Buffer.byteLength(JSON.stringify(msg) || '', 'utf8')
+      void handleHelperRequest(msg, deps, rawBytes).then((res) => write(encodeMessage(res)))
+    }
   }
 }
 
@@ -126,20 +156,52 @@ function startSocket(): void {
       /* ignore */
     }
   }
+  let openConnections = 0
   const server = net.createServer((socket) => {
+    if (openConnections >= MAX_HELPER_CONNECTIONS) {
+      socket.destroy()
+      return
+    }
+    openConnections++
     socket.setEncoding('utf8')
-    const onData = serveConnection((line) => {
-      if (!socket.destroyed) socket.write(line)
+    socket.setTimeout(SOCKET_IDLE_MS, () => socket.destroy())
+    socket.on('close', () => {
+      openConnections = Math.max(0, openConnections - 1)
     })
+    const onData = serveConnection(
+      (line) => {
+        if (!socket.destroyed) socket.write(line)
+      },
+      () => socket.destroy()
+    )
     socket.on('data', onData)
     socket.on('error', () => socket.destroy())
   })
+  // A bind failure (EADDRINUSE/EACCES) must not crash the privileged process
+  // with an unhandled 'error' event.
+  server.on('error', (err) => {
+    deps.logger?.warn('helper.listen_error', { code: (err as NodeJS.ErrnoException).code || 'unknown' })
+    process.exit(1)
+  })
+  if (endpoint.kind === 'unix-socket') {
+    // Create the socket 0600 from the moment it is bound (close the window
+    // where it briefly existed group/world-accessible before the old chmod).
+    try {
+      process.umask(0o177)
+    } catch {
+      /* umask unavailable; chmod fallback below still applies */
+    }
+  }
   server.listen(endpoint.path, () => {
     if (endpoint.kind === 'unix-socket') {
       try {
         chmodSync(endpoint.path, 0o600)
-      } catch {
-        /* best-effort; installer sets ownership root:wheel */
+      } catch (err) {
+        // Fail closed: if we cannot restrict the socket we must not keep serving
+        // privileged operations on a potentially world-accessible endpoint.
+        deps.logger?.warn('helper.socket_perms_failed', { code: (err as NodeJS.ErrnoException).code || 'unknown' })
+        server.close()
+        process.exit(1)
       }
     }
   })

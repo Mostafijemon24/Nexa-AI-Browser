@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { PROFILE_ID_RE } from './types'
 import type { AiMessage } from './ai'
-import { INJECTION_GUARD, wrapUntrusted } from './page-content'
+import { INJECTION_GUARD, sanitizePageText, sanitizeUrl, wrapUntrusted } from './page-content'
 
 /**
  * NEXA P5.1 — Browser Agent shared contract (pure, dependency-light, testable).
@@ -120,6 +120,75 @@ export function isSafeHttpUrl(url: string): boolean {
   try {
     const u = new URL(url)
     return u.protocol === 'http:' || u.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * True for a hostname that must never be reachable by an autonomous agent
+ * navigation/download: loopback, link-local (incl. the 169.254.169.254 cloud
+ * metadata address), RFC1918 / CGNAT / ULA private ranges, multicast/reserved,
+ * and non-public local suffixes. Blocks SSRF to internal/localhost services.
+ */
+export function isPrivateHost(hostname: string): boolean {
+  const h = (hostname || '').toLowerCase().replace(/^\[|\]$/g, '')
+  if (!h) return true
+  if (h === 'localhost' || h.endsWith('.localhost')) return true
+  if (h.endsWith('.local') || h.endsWith('.internal')) return true
+  // IPv6 literal (hostnames never contain ':').
+  if (h.includes(':')) {
+    if (h === '::1' || h === '::') return true
+    if (h.startsWith('fe80') || h.startsWith('fc') || h.startsWith('fd')) return true
+    if (h.startsWith('::ffff:')) return true // IPv4-mapped — block conservatively
+    return false
+  }
+  const v4 = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+  if (v4) {
+    const a = Number(v4[1])
+    const b = Number(v4[2])
+    if (a === 0 || a === 10 || a === 127) return true
+    if (a === 169 && b === 254) return true // link-local + cloud metadata
+    if (a === 172 && b >= 16 && b <= 31) return true
+    if (a === 192 && b === 168) return true
+    if (a === 100 && b >= 64 && b <= 127) return true // CGNAT
+    if (a >= 224) return true // multicast / reserved
+    return false
+  }
+  return false
+}
+
+/** True only for an http(s) URL whose host is a routable, public address. */
+export function isPublicHttpUrl(url: string): boolean {
+  try {
+    const u = new URL(url)
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false
+    return !isPrivateHost(u.hostname)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Heuristic for an agent-initiated navigation that could carry exfiltrated page
+ * data out of the browser. A large query/fragment is the classic channel; a
+ * long path to a *different* host is the fallback channel. Same-site, payload-
+ * free navigations (normal link following) are not flagged.
+ */
+export function navigationExfilRisk(url: string, currentOrigin: string): boolean {
+  try {
+    const u = new URL(url)
+    const cur = (() => {
+      try {
+        return new URL(currentOrigin).hostname.toLowerCase()
+      } catch {
+        return ''
+      }
+    })()
+    const payload = u.search.length + u.hash.length
+    if (payload > 128) return true
+    if (cur && u.hostname.toLowerCase() !== cur && (payload > 24 || u.pathname.length > 80)) return true
+    return false
   } catch {
     return false
   }
@@ -410,7 +479,13 @@ export function buildPlannerMessages(input: {
   currentPage?: { url: string; title: string }
 }): AiMessage[] {
   const catalogue = `Available tools:\n${toolCatalogue()}`
-  const page = input.currentPage ? `Current page: ${input.currentPage.title || '(untitled)'} <${input.currentPage.url || 'about:blank'}>` : 'No page loaded yet.'
+  // The live page title + URL are attacker-influenced (a page can set any
+  // document.title / hash). Treat them as untrusted DATA: the title is fenced
+  // with the injection guard and the URL is reduced to scheme://host/path
+  // (query/fragment dropped) so neither can smuggle instructions to the planner.
+  const page = input.currentPage
+    ? `Current page URL: ${sanitizeUrl(input.currentPage.url || '') || 'about:blank'}\nCurrent page title (untrusted): ${wrapUntrusted(sanitizePageText(input.currentPage.title || '').slice(0, 200) || '(untitled)')}`
+    : 'No page loaded yet.'
   const log = input.history.length
     ? input.history
         .map((h, i) => `Step ${i + 1}: ${h.tool}(${safeArgs(h.arguments)}) -> ${h.ok ? '' : 'ERROR '}${h.observation}`)

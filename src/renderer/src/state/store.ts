@@ -26,7 +26,7 @@ import { summarize, type DownloadItem, type DownloadSettings, type DownloadSumma
 import type { ProtectionSnapshot, ProtectionRules, VpnStatus, VpnServer } from '../nexa'
 import {
   buildActionMessages,
-  pageContextSystemMessage,
+  pageContextMessages,
   CHAT_TIMEOUT_MS,
   type AiStatus,
   type AiRunState,
@@ -1065,7 +1065,7 @@ export const useNexa = create<Store>((set, get) => ({
     // Page Q&A: prepend the untrusted, fenced page context as a system message
     // so the whole conversation stays grounded in the current page.
     const messages: AiMessage[] = st.aiPageContext
-      ? [pageContextSystemMessage(st.aiPageContext), ...turns]
+      ? [...pageContextMessages(st.aiPageContext), ...turns]
       : turns
     set({ aiMessages: [...st.aiMessages, userMsg] })
     get().aiStartStream(messages, { private: tabPrivate || !!st.aiPageContext?.private })

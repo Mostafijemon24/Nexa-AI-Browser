@@ -503,7 +503,7 @@ function TabStrip() {
                   className="menu-item"
                   onClick={() =>
                     run(() => {
-                      const el = document.querySelector('webview') as HTMLElement & { reload?: () => void }
+                      const el = document.querySelector('webview[data-active="true"]') as HTMLElement & { reload?: () => void }
                       el?.reload?.()
                     })
                   }
@@ -751,7 +751,7 @@ function Toolbar() {
   const nav = useNexa((s) => s.webNav)
   const canBack = onWeb && nav?.tabId === activeId && nav.canBack
   const canForward = onWeb && nav?.tabId === activeId && nav.canForward
-  const webview = () => document.querySelector('webview') as WebviewEl | null
+  const webview = () => document.querySelector('webview[data-active="true"]') as WebviewEl | null
   return (
     <div className="toolbar">
       <button
@@ -1265,28 +1265,41 @@ function Sidebar() {
 }
 
 function Content() {
-  const tab = useNexa((s) => s.session.tabs.find((t) => t.id === s.session.activeTab))
+  const tabs = useNexa((s) => s.session.tabs)
+  const activeId = useNexa((s) => s.session.activeTab)
   const profileId = useNexa((s) => s.activeProfile)
-  if (!tab) return null
-  if (tab.kind === 'web' && tab.url) {
-    // Private tabs use an in-memory partition so nothing persists to disk.
-    const partition = tab.private ? `nexa-private-${profileId}` : `persist:nexa-${profileId}`
-    return <WebTab tabId={tab.id} url={tab.url} partition={partition} />
-  }
-  if (tab.view === 'settings') return <SettingsView />
-  if (tab.view === 'downloads') return <DownloadsView />
-  if (tab.view === 'cloud') return <PlaceholderPage icon={<Cloud size={28} />} title="Cloud Transfer" honest="REQUIRES OAUTH · NOT CONFIGURED" body="Drive, GCS, Dropbox, OneDrive and S3 are not connected. Tokens are never stored until you authorize a provider." />
-  if (tab.view === 'about') return <AboutView />
-  if (tab.view === 'bookmarks') return <BookmarksView />
-  if (tab.view === 'history') return <HistoryView />
-  if (tab.view === 'collections') return <CollectionsView />
-  if (tab.view === 'protection') return <ProtectionView />
-  if (tab.view === 'privacy') return <PrivacyCenterView />
-  if (tab.view === 'drive') return <DriveView />
+  const active = tabs.find((t) => t.id === activeId)
+  // Every web tab is kept mounted (display-toggled) so switching tabs never
+  // tears down + reloads a webview. Non-web "views" (Settings, Downloads, …)
+  // render on top only when the active tab is one of them.
+  const webTabs = tabs.filter((t) => t.kind === 'web' && !!t.url)
+  const activeIsWeb = !!active && active.kind === 'web' && !!active.url
+  return (
+    <>
+      {webTabs.map((t) => {
+        const partition = t.private ? `nexa-private-${profileId}` : `persist:nexa-${profileId}`
+        return <WebTab key={t.id} tabId={t.id} url={t.url as string} partition={partition} active={t.id === activeId} />
+      })}
+      {active && !activeIsWeb && <TabView view={active.view} />}
+    </>
+  )
+}
+
+function TabView({ view }: { view?: string }) {
+  if (view === 'settings') return <SettingsView />
+  if (view === 'downloads') return <DownloadsView />
+  if (view === 'cloud') return <PlaceholderPage icon={<Cloud size={28} />} title="Cloud Transfer" honest="REQUIRES OAUTH · NOT CONFIGURED" body="Drive, GCS, Dropbox, OneDrive and S3 are not connected. Tokens are never stored until you authorize a provider." />
+  if (view === 'about') return <AboutView />
+  if (view === 'bookmarks') return <BookmarksView />
+  if (view === 'history') return <HistoryView />
+  if (view === 'collections') return <CollectionsView />
+  if (view === 'protection') return <ProtectionView />
+  if (view === 'privacy') return <PrivacyCenterView />
+  if (view === 'drive') return <DriveView />
   return <NewTabView />
 }
 
-function WebTab({ tabId, url, partition }: { tabId: string; url: string; partition: string }) {
+function WebTab({ tabId, url, partition, active }: { tabId: string; url: string; partition: string; active: boolean }) {
   // `src` is only the initial URL: later url changes that come from the page
   // itself (links, back/forward) must not re-trigger a load.
   const [initialSrc] = useState(url)
@@ -1371,7 +1384,18 @@ function WebTab({ tabId, url, partition }: { tabId: string; url: string; partiti
       if (!useNexa.getState().prefs.turbo.metrics) useNexa.getState().recordNavPerf(null)
     })
   }
-  return createElement('webview', { key: tabId, ref, src: initialSrc, partition, style: { flex: 1, width: '100%' } })
+  // All web tabs stay mounted; only the active one is shown. Switching tabs
+  // toggles `display` instead of unmounting, so background tabs keep their page,
+  // scroll position and form state and never reload or flicker on switch.
+  return createElement('webview', {
+    key: tabId,
+    ref,
+    src: initialSrc,
+    partition,
+    'data-tabid': tabId,
+    'data-active': active ? 'true' : 'false',
+    style: active ? { flex: 1, width: '100%' } : { display: 'none' }
+  })
 }
 
 const num = (v: unknown): number | undefined => (typeof v === 'number' && isFinite(v) && v >= 0 ? v : undefined)
@@ -1517,7 +1541,7 @@ function activeWebview(): WebviewExec | null {
   const st = useNexa.getState()
   const tab = st.session.tabs.find((t) => t.id === st.session.activeTab)
   if (!tab || tab.kind !== 'web') return null
-  return document.querySelector('webview') as WebviewExec | null
+  return document.querySelector('webview[data-active="true"]') as WebviewExec | null
 }
 
 // Readability-style extraction script. Runs IN the page and returns ONLY
@@ -1893,16 +1917,32 @@ async function executeAgentTool(tool: string, args: Record<string, unknown>): Pr
 
       /* ---- Interaction ---- */
       case 'click': {
-        const code = `(()=>{ ${RESOLVER_SRC} const t=${JSON.stringify(args.target)}; const f=__nxFind(t); if(!f.els.length) return JSON.stringify({ok:false,error:'element_not_found'}); if(f.els.length>1&&t.index==null&&f.tie) return JSON.stringify({ok:false,error:'ambiguous',count:f.els.length}); const el=t.index!=null?f.els[t.index]:f.els[0]; if(!el) return JSON.stringify({ok:false,error:'element_not_found'}); el.scrollIntoView({block:'center'}); el.click(); return JSON.stringify({ok:true,tag:el.tagName.toLowerCase(),text:((el.innerText||el.value||'')+'').slice(0,80)}); })()`
+        // Enforce the "never submit / log in / pay" guarantee at the point of
+        // action: refuse clicks on payment/login/checkout controls and on form
+        // submit controls whose form holds a password or payment field. Benign
+        // submits (e.g. a search box) stay allowed so the agent remains useful.
+        const code = `(()=>{ ${RESOLVER_SRC}
+          function __nxFormSensitive(form){ if(!form) return false; var ins=form.querySelectorAll('input'); for(var i=0;i<ins.length;i++){ var tp=((ins[i].type||'')+'').toLowerCase(); var ac=((ins[i].getAttribute('autocomplete')||'')+'').toLowerCase(); var nm=(((ins[i].name||'')+' '+(ins[i].id||'')+' '+(ins[i].getAttribute('aria-label')||''))+'').toLowerCase(); if(tp==='password') return true; if(/cc-|credit|card|cvv|cvc|one-time-code/.test(ac)) return true; if(/password|passwd|\\bpwd\\b|\\botp\\b|\\bcvv\\b|\\bcvc\\b|card ?number|credit ?card/.test(nm)) return true; } return false; }
+          function __nxBlockedClick(el){ var tag=el.tagName; var type=((el.getAttribute('type')||'')+'').toLowerCase(); var hay=(((el.innerText||el.value||'')+' '+(el.getAttribute('aria-label')||''))+'').toLowerCase(); if(/\\b(pay|buy now|purchase|checkout|place order|log ?in|sign ?in|confirm (purchase|payment|order)|transfer|send money|subscribe|donate)\\b/.test(hay)) return true; var isSubmit=((tag==='BUTTON'&&(type===''||type==='submit'))||(tag==='INPUT'&&(type==='submit'||type==='image'))); if(isSubmit){ var form=el.form||el.closest('form'); if(__nxFormSensitive(form)) return true; } return false; }
+          const t=${JSON.stringify(args.target)}; const f=__nxFind(t); if(!f.els.length) return JSON.stringify({ok:false,error:'element_not_found'}); if(f.els.length>1&&t.index==null&&f.tie) return JSON.stringify({ok:false,error:'ambiguous',count:f.els.length}); const el=t.index!=null?f.els[t.index]:f.els[0]; if(!el) return JSON.stringify({ok:false,error:'element_not_found'}); if(__nxBlockedClick(el)) return JSON.stringify({ok:false,error:'submit_blocked'}); el.scrollIntoView({block:'center'}); el.click(); return JSON.stringify({ok:true,tag:el.tagName.toLowerCase(),text:((el.innerText||el.value||'')+'').slice(0,80)}); })()`
         const r = JSON.parse(String(await runJs(code))) as { ok: boolean; error?: string; tag?: string; text?: string; count?: number }
-        if (!r.ok) return { ok: false, observation: '', error: r.error === 'ambiguous' ? `ambiguous_target (${r.count} matches)` : r.error || 'click_failed' }
+        if (!r.ok) {
+          if (r.error === 'submit_blocked') return { ok: false, observation: 'BLOCKED — this looks like a submit, log-in, or payment control. NEXA never submits forms, logs in, or pays on your behalf.', error: 'submit_blocked', page: agentSnapshot() }
+          return { ok: false, observation: '', error: r.error === 'ambiguous' ? `ambiguous_target (${r.count} matches)` : r.error || 'click_failed' }
+        }
         await delay(200)
         return { ok: true, observation: `Clicked <${r.tag}> ${r.text ? '“' + r.text + '”' : ''}. ${describeSnap()}`, page: agentSnapshot() }
       }
       case 'type': {
-        const code = `(()=>{ ${RESOLVER_SRC} const t=${JSON.stringify(args.target)}; const val=${JSON.stringify(String(args.text ?? ''))}; const f=__nxFind(t); if(!f.els.length) return JSON.stringify({ok:false,error:'element_not_found'}); const el=t.index!=null?f.els[t.index]:f.els[0]; if(!el) return JSON.stringify({ok:false,error:'element_not_found'}); if(el.tagName==='INPUT'&&(el.type==='password')) return JSON.stringify({ok:false,error:'password_field_blocked'}); el.focus(); if(el.isContentEditable){ el.textContent=val; } else { const proto=el.tagName==='TEXTAREA'?window.HTMLTextAreaElement.prototype:window.HTMLInputElement.prototype; const setter=Object.getOwnPropertyDescriptor(proto,'value').set; setter.call(el,val); } el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); return JSON.stringify({ok:true}); })()`
+        // Block secret entry authoritatively from the RESOLVED element — not just
+        // model hints: password fields, autocomplete cc-*/one-time-code, and
+        // name/id/aria/placeholder matching card/OTP/CVV/PIN patterns.
+        const code = `(()=>{ ${RESOLVER_SRC} const t=${JSON.stringify(args.target)}; const val=${JSON.stringify(String(args.text ?? ''))}; const f=__nxFind(t); if(!f.els.length) return JSON.stringify({ok:false,error:'element_not_found'}); const el=t.index!=null?f.els[t.index]:f.els[0]; if(!el) return JSON.stringify({ok:false,error:'element_not_found'}); var tp=((el.type||'')+'').toLowerCase(); var ac=((el.getAttribute('autocomplete')||'')+'').toLowerCase(); var meta=(((el.name||'')+' '+(el.id||'')+' '+(el.getAttribute('aria-label')||'')+' '+(el.getAttribute('placeholder')||''))+'').toLowerCase(); if(el.tagName==='INPUT'&&tp==='password') return JSON.stringify({ok:false,error:'password_field_blocked'}); if(/cc-|one-time-code/.test(ac)||/pass ?word|passwd|\\bpwd\\b|\\botp\\b|one[-\\s]?time|\\bcvv\\b|\\bcvc\\b|\\bpin\\b|security code|card ?number|credit ?card/.test(meta)) return JSON.stringify({ok:false,error:'sensitive_field_blocked'}); el.focus(); if(el.isContentEditable){ el.textContent=val; } else { const proto=el.tagName==='TEXTAREA'?window.HTMLTextAreaElement.prototype:window.HTMLInputElement.prototype; const setter=Object.getOwnPropertyDescriptor(proto,'value').set; setter.call(el,val); } el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); return JSON.stringify({ok:true}); })()`
         const r = JSON.parse(String(await runJs(code))) as { ok: boolean; error?: string }
-        if (!r.ok) return { ok: false, observation: '', error: r.error || 'type_failed' }
+        if (!r.ok) {
+          if (r.error === 'password_field_blocked' || r.error === 'sensitive_field_blocked') return { ok: false, observation: 'BLOCKED — this field looks like a password, card number, CVV, PIN, or one-time code. NEXA never enters secrets automatically; the user must type it.', error: r.error, page: agentSnapshot() }
+          return { ok: false, observation: '', error: r.error || 'type_failed' }
+        }
         return { ok: true, observation: 'Typed text into the field.', page: agentSnapshot() }
       }
       case 'select_option': {
@@ -1989,8 +2029,12 @@ async function executeAgentTool(tool: string, args: Record<string, unknown>): Pr
 
       /* ---- Downloads (existing P2 engine via navigation) ---- */
       case 'download': {
+        // Opens the URL in the profile's own (VPN-routed, protection-enabled)
+        // session; the browser's will-download handler routes any attachment to
+        // the P2 download engine. If the server returns a viewable document it
+        // opens as a tab instead — so the observation does not overclaim.
         st.openUrl(String(args.url), { newTab: true })
-        return { ok: true, observation: `Requested download of ${args.url} through NEXA's download engine. Check the Downloads panel.`, page: agentSnapshot() }
+        return { ok: true, observation: `Opened ${args.url} in a new tab. If the server sends it as a file, it will appear in the Downloads panel; otherwise it opened as a page.`, page: agentSnapshot() }
       }
 
       /* ---- Output ---- */

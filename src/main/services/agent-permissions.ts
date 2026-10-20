@@ -1,5 +1,7 @@
 import {
+  isPublicHttpUrl,
   isSafeHttpUrl,
+  navigationExfilRisk,
   type AgentMode,
   type PermissionDecision,
   type RiskLevel,
@@ -74,11 +76,24 @@ export class PermissionEngine {
     // Navigation: validate the DESTINATION url shape, but the permission decision
     // still uses the actual browser origin for context. Never trust model URL blindly.
     if (tool.security === 'NAVIGATION') {
-      if ((tool.name === 'navigate' || tool.name === 'open_tab') && typeof args.url === 'string' && !isSafeHttpUrl(args.url)) {
-        return { decision: 'deny', risk, summary: 'Refused: the requested URL is not a valid http(s) address.' }
+      const url = typeof args.url === 'string' ? args.url : ''
+      if ((tool.name === 'navigate' || tool.name === 'open_tab') && url) {
+        if (!isSafeHttpUrl(url)) {
+          return { decision: 'deny', risk, summary: 'Refused: the requested URL is not a valid http(s) address.' }
+        }
+        // SSRF guard: never let the agent reach loopback / LAN / cloud-metadata hosts unattended.
+        if (!isPublicHttpUrl(url)) {
+          return { decision: 'ask', risk: 'high', summary: `NEXA wants to open a private or local network address (${originLabel(url)}). Confirm this is intended.` }
+        }
+        // Exfiltration guard: a navigation that carries page-derived data out of
+        // the browser (large query/fragment, or a long path to a new host) is
+        // confirm-gated even in agent mode.
+        if (navigationExfilRisk(url, origin)) {
+          return { decision: 'ask', risk: 'high', summary: `NEXA wants to navigate to ${originLabel(url)} with a large data payload in the URL. Confirm to continue.` }
+        }
+        return { decision: 'allow', risk, summary: `Navigate/manage tabs (${originLabel(url)}).` }
       }
-      const dest = typeof args.url === 'string' ? originLabel(args.url) : where
-      return { decision: 'allow', risk, summary: `Navigate/manage tabs (${dest}).` }
+      return { decision: 'allow', risk, summary: `Navigate/manage tabs (${where}).` }
     }
 
     if (tool.security === 'READ') {
@@ -109,6 +124,7 @@ export class PermissionEngine {
     if (tool.security === 'DATA') {
       if (tool.name === 'download' && typeof args.url === 'string') {
         if (!isSafeHttpUrl(args.url)) return { decision: 'deny', risk, summary: 'Refused: the download URL is not a valid http(s) address.' }
+        if (!isPublicHttpUrl(args.url)) return { decision: 'deny', risk, summary: 'Refused: downloads from private or local network addresses are not allowed.' }
         return { decision: 'ask', risk, summary: `NEXA wants to download a file from ${originLabel(args.url)} using your download settings.` }
       }
       // summarize / save_result / finish — output only, no side effects.

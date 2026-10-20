@@ -479,31 +479,44 @@ async function readSSE(
 ): Promise<string> {
   const reader = body.getReader()
   const decoder = new TextDecoder()
+  const MAX_SSE_BUFFER = 1024 * 1024 // guard against an unbounded no-newline stream
   let buf = ''
   let full = ''
-  for (;;) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buf += decoder.decode(value, { stream: true })
-    let nl: number
-    while ((nl = buf.indexOf('\n')) >= 0) {
-      const line = buf.slice(0, nl).trim()
-      buf = buf.slice(nl + 1)
-      if (!line || !line.startsWith('data:')) continue
-      const payload = line.slice(5).trim()
-      if (payload === '[DONE]') return full
-      let json: unknown
-      try {
-        json = JSON.parse(payload)
-      } catch {
-        continue
-      }
-      const delta = extract(json)
-      if (delta) {
-        full += delta
-        onDelta(delta)
+  // try/finally guarantees the body reader is cancelled on the `[DONE]` early
+  // return and on any thrown error — otherwise the locked, un-cancelled reader
+  // keeps the underlying HTTP socket open until GC (fd/connection leak).
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += decoder.decode(value, { stream: true })
+      if (buf.length > MAX_SSE_BUFFER) throw new Error('bad_response')
+      let nl: number
+      while ((nl = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, nl).trim()
+        buf = buf.slice(nl + 1)
+        if (!line || !line.startsWith('data:')) continue
+        const payload = line.slice(5).trim()
+        if (payload === '[DONE]') return full
+        let json: unknown
+        try {
+          json = JSON.parse(payload)
+        } catch {
+          continue
+        }
+        const delta = extract(json)
+        if (delta) {
+          full += delta
+          onDelta(delta)
+        }
       }
     }
+    return full
+  } finally {
+    try {
+      await reader.cancel()
+    } catch {
+      /* already released */
+    }
   }
-  return full
 }

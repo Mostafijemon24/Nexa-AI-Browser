@@ -68,16 +68,39 @@ export function generatePassword(opts: {
   const L = opts.noAmbig ? 'abcdefghijkmnpqrstuvwxyz' : 'abcdefghijklmnopqrstuvwxyz'
   const N = opts.noAmbig ? '23456789' : '0123456789'
   const S = '!@#$%^&*()-_=+[]{}'
-  let pool = ''
-  if (opts.upper) pool += U
-  if (opts.lower) pool += L
-  if (opts.num) pool += N
-  if (opts.sym) pool += S
-  if (!pool) pool = L
-  const arr = randomBytes(opts.length)
-  let out = ''
-  for (let i = 0; i < opts.length; i++) out += pool[arr[i] % pool.length]
-  return out
+  const classes: string[] = []
+  if (opts.upper) classes.push(U)
+  if (opts.lower) classes.push(L)
+  if (opts.num) classes.push(N)
+  if (opts.sym) classes.push(S)
+  if (!classes.length) classes.push(L)
+  const pool = classes.join('')
+
+  // Uniform selection with rejection sampling — avoids the modulo bias of
+  // `byte % pool.length` (which skews toward lower code points when the pool
+  // size does not divide 256) and keeps full entropy per character.
+  const pickIndex = (n: number): number => {
+    const limit = 256 - (256 % n) // largest multiple of n that fits in a byte
+    for (;;) {
+      const b = randomBytes(1)[0]
+      if (b < limit) return b % n
+    }
+  }
+
+  const out: string[] = []
+  // Guarantee at least one character from each selected class (when length
+  // allows), then fill the remainder from the full pool.
+  for (const alphabet of classes) {
+    if (out.length < opts.length) out.push(alphabet[pickIndex(alphabet.length)])
+  }
+  while (out.length < opts.length) out.push(pool[pickIndex(pool.length)])
+
+  // Unbiased Fisher–Yates shuffle so the guaranteed characters are not fixed.
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = pickIndex(i + 1)
+    ;[out[i], out[j]] = [out[j], out[i]]
+  }
+  return out.join('')
 }
 
 export { passwordStrength } from '../shared/strength'

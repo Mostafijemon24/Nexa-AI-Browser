@@ -107,6 +107,15 @@ function decodeEntities(s: string): string {
     .replace(/&amp;/g, '&')
 }
 
+/**
+ * Imported titles are untrusted. Strip angle brackets so a stored title can
+ * never carry literal markup (defense-in-depth: safe today because the renderer
+ * never uses innerHTML, and safe if that ever changes).
+ */
+function safeTitle(s: string): string {
+  return s.replace(/[<>]/g, '').trim()
+}
+
 function encodeEntities(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -125,7 +134,13 @@ export function parseNetscape(html: string): ImportNode[] {
   const levels: ImportNode[][] = [roots]
   let pendingFolder: Extract<ImportNode, { type: 'folder' }> | null = null
 
-  const tokenRe = /<dl[^>]*>|<\/dl>|<h3[^>]*>([\s\S]*?)<\/h3>|<a\s+[^>]*href\s*=\s*["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi
+  // Each alternative uses non-overlapping quantifiers so there is no catastrophic
+  // backtracking: the `<a …>` open tag is captured with a single `[^>]*` (which
+  // cannot consume `>`), and the href is pulled from that captured attribute
+  // string in a separate, linear step. (The previous `<a\s+[^>]*href…` had two
+  // quantifiers that could both match whitespace → O(n²) ReDoS on crafted input.)
+  const tokenRe = /<dl[^>]*>|<\/dl>|<h3[^>]*>([\s\S]*?)<\/h3>|<a\b([^>]*)>([\s\S]*?)<\/a>/gi
+  const hrefRe = /href\s*=\s*["']([^"']*)["']/i
   let m: RegExpExecArray | null
   let guard = 0
   while ((m = tokenRe.exec(html)) && guard++ < 100000) {
@@ -140,15 +155,16 @@ export function parseNetscape(html: string): ImportNode[] {
     } else if (tag.startsWith('<h3')) {
       const folder: Extract<ImportNode, { type: 'folder' }> = {
         type: 'folder',
-        title: decodeEntities(m[1] || 'Folder').trim() || 'Folder',
+        title: safeTitle(decodeEntities(m[1] || 'Folder')) || 'Folder',
         children: []
       }
       top.push(folder)
       pendingFolder = folder
     } else if (tag.startsWith('<a')) {
-      const url = validateBookmarkUrl(decodeEntities(m[2] || ''))
+      const hrefM = hrefRe.exec(m[2] || '')
+      const url = validateBookmarkUrl(decodeEntities(hrefM?.[1] || ''))
       if (url) {
-        top.push({ type: 'bookmark', title: decodeEntities(m[3] || url).trim() || url, url })
+        top.push({ type: 'bookmark', title: safeTitle(decodeEntities(m[3] || url)) || url, url })
         pendingFolder = null
       }
     }

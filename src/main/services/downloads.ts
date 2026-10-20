@@ -434,7 +434,18 @@ export class DownloadService {
   private restart(rec: DownloadItem) {
     const dir = rec.destinationDir || this.destinationDir(rec.profileId)
     mkdirSync(dir, { recursive: true })
-    const savePath = rec.savePath && resolve(dirname(rec.savePath)) === resolve(dir) ? rec.savePath : resolve(dir, rec.filename)
+    // Re-sanitize the persisted name and re-apply the traversal guard: values
+    // loaded from downloads.json are untrusted (a tampered file could carry
+    // `../` or an absolute path that the retry path would otherwise honor).
+    const safeName = sanitizeFilename(rec.filename || 'download')
+    const savePath = rec.savePath && resolve(dirname(rec.savePath)) === resolve(dir) ? rec.savePath : resolve(dir, safeName)
+    if (dirname(savePath) !== resolve(dir)) {
+      rec.status = 'failed'
+      rec.errorCode = 'restart_failed'
+      rec.errorMessage = 'Invalid download destination'
+      this.pushUpdate(rec.profileId, rec)
+      return
+    }
     this.pending.set(rec.url, { id: rec.id, savePath, profileId: rec.profileId, isPrivate: !!rec.private })
     const part = rec.private ? PARTITION_PRIVATE(rec.profileId) : PARTITION_PERSIST(rec.profileId)
     try {

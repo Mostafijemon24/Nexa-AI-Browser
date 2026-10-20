@@ -61,6 +61,28 @@ export function bearerToken(req: IncomingMessage): string | null {
   return m ? m[1] : null
 }
 
+/**
+ * True when the TCP peer is a loopback/private address — i.e. plausibly our own
+ * reverse proxy rather than a direct public client. `X-Forwarded-*` headers are
+ * trusted ONLY for such peers, so a direct public client cannot spoof its IP or
+ * forge `X-Forwarded-Proto: https` to pass the production HTTPS gate.
+ */
+export function peerIsTrustworthy(remoteAddress: string | undefined): boolean {
+  const ip = (remoteAddress || '').replace(/^::ffff:/, '').toLowerCase()
+  if (!ip) return false
+  if (ip === '127.0.0.1' || ip === '::1') return true
+  const m = ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+  if (m) {
+    const a = Number(m[1])
+    const b = Number(m[2])
+    if (a === 10 || a === 127) return true
+    if (a === 172 && b >= 16 && b <= 31) return true
+    if (a === 192 && b === 168) return true
+    return false
+  }
+  return ip.startsWith('fc') || ip.startsWith('fd') || ip.startsWith('fe80')
+}
+
 /** Client IP. With a trusted proxy, the right-most X-Forwarded-For hop is used. */
 export function clientIp(req: IncomingMessage, trustProxy: boolean): string {
   if (trustProxy) {

@@ -340,6 +340,14 @@ export class AgentService {
             step.observation = 'User declined this action.'
             this.emitStep(task, step)
             rt.history.push({ tool: v.tool.name, arguments: v.arguments, observation: step.observation, ok: false })
+            // A declined step counts toward the failure + loop budget so the
+            // model cannot re-request the same action every turn (consent spam).
+            rt.signatures.push(sig)
+            rt.consecutiveFailures++
+            if (rt.consecutiveFailures >= AGENT_MAX_CONSECUTIVE_FAILURES) {
+              finalError = 'no_progress'
+              break
+            }
             continue
           }
         }
