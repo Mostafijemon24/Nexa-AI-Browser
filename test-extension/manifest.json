@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "NEXA Test Extension",
+  "version": "1.0.0",
+  "description": "Minimal MV3 extension used to validate NEXA's extension runtime (action + content script + storage).",
+  "permissions": ["storage"],
+  "host_permissions": ["https://example.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://example.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "NEXA Test Extension",
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "16": "icon.png"
+  }
+}

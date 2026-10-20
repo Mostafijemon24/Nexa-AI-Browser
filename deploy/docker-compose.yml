@@ -1,0 +1,70 @@
+# NEXA AI Gateway behind Caddy (automatic HTTPS).
+#
+#   1. Point DNS for $NEXA_AI_DOMAIN at this host.
+#   2. Create the secret files (never commit them):
+#        mkdir -p deploy/secrets && chmod 700 deploy/secrets
+#        printf '%s' '<your OpenRouter key>' > deploy/secrets/openrouter_api_key
+#        openssl rand -hex 32 | tr -d '\n' > deploy/secrets/ai_encryption_key
+#   3. NEXA_AI_DOMAIN=ai.example.com docker compose -f deploy/docker-compose.yml up -d --build
+#
+# Only Caddy is published; the gateway listens on the internal network.
+
+services:
+  gateway:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    # `environment` wins over `env_file`, so these cannot be blanked by server/.env.
+    environment:
+      NODE_ENV: production
+      AI_GATEWAY_HOST: 0.0.0.0
+      PORT: '8787'
+      AI_DB_PATH: /data/nexa-ai.sqlite
+      AI_TRUST_PROXY: 'true'
+      OPENROUTER_API_KEY_FILE: /run/secrets/openrouter_api_key
+      AI_ENCRYPTION_KEY_FILE: /run/secrets/ai_encryption_key
+      AI_PUBLIC_REFERER: https://${NEXA_AI_DOMAIN:?set NEXA_AI_DOMAIN}
+    env_file:
+      - path: ../server/.env
+        required: false
+    secrets:
+      - openrouter_api_key
+      - ai_encryption_key
+    volumes:
+      - gateway-data:/data
+    expose:
+      - '8787'
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      gateway:
+        condition: service_healthy
+    environment:
+      NEXA_AI_DOMAIN: ${NEXA_AI_DOMAIN:?set NEXA_AI_DOMAIN}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+secrets:
+  openrouter_api_key:
+    file: ./secrets/openrouter_api_key
+  ai_encryption_key:
+    file: ./secrets/ai_encryption_key
+
+volumes:
+  gateway-data:
+  caddy-data:
+  caddy-config:

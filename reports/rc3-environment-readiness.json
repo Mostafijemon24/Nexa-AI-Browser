@@ -1,0 +1,210 @@
+{
+  "status": "RC3_READINESS_PLAN_COMPLETE",
+  "artifact": {
+    "recordedBy": "RC-2",
+    "path": "dist/mac-arm64/NEXA.app",
+    "version": "0.1.0",
+    "electron": "44.4.1",
+    "machOSha256": "c803dc22bbd4fa3e90c395b43296bda3442c0d1df9d2747985029fa5b1452df2",
+    "signingObserved": "adhoc",
+    "teamIdentifierObserved": "not set",
+    "dmg": "absent at RC-2",
+    "zip": "absent at RC-2",
+    "presentOnDiskThisPhase": false,
+    "note": "RC-3 did not regenerate or re-sign the artifact. The hash is historical RC-2 evidence, not a new measurement."
+  },
+  "environment": {
+    "os": "macOS",
+    "version": "27.0",
+    "build": "26A428",
+    "architecture": "arm64",
+    "node": "v24.17.0",
+    "npm": "11.13.0",
+    "xcodeSelectPath": "/Library/Developer/CommandLineTools",
+    "fullXcode": false
+  },
+  "releaseToolchain": {
+    "packager": "electron-builder",
+    "forge": false,
+    "config": "electron-builder.yml",
+    "scripts": ["package", "package:mac", "package:win", "package:linux"],
+    "ci": {
+      "file": ".github/workflows/ci.yml",
+      "runner": "ubuntu-latest",
+      "steps": ["npm ci", "typecheck", "npm test", "gitleaks"],
+      "macRelease": false,
+      "signing": false
+    },
+    "tools": {
+      "codesign": "/usr/bin/codesign",
+      "spctl": "/usr/sbin/spctl",
+      "notarytool": "/Library/Developer/CommandLineTools/usr/bin/notarytool",
+      "stapler": "present on PATH but unusable; requires full Xcode",
+      "xcodebuild": "unusable; requires full Xcode"
+    }
+  },
+  "signing": {
+    "configured": {
+      "identity": "not set in electron-builder.yml; electron-builder searches the keychain",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "gatekeeperAssessDuringPackaging": false
+    },
+    "actuallySigned": false,
+    "identities": [
+      {
+        "name": "Apple Development: mostafijemon24@gmail.com (ZP2GWVSQB9)",
+        "kind": "Apple Development",
+        "usableForDeveloperIdDistribution": false
+      }
+    ],
+    "developerIdApplication": false,
+    "credentialEnv": {
+      "CSC_LINK": "unset",
+      "CSC_NAME": "unset",
+      "CSC_KEY_PASSWORD": "unset"
+    },
+    "requiredIdentity": "Developer ID Application",
+    "nestedElectronHelpersRequireSigning": true,
+    "vpnHelperRequiresSeparateSigning": true,
+    "stableSealedArtifactProduced": false
+  },
+  "gatekeeper": {
+    "status": "cannot assess",
+    "reason": "Last observed artifact was adhoc and failed codesign --verify. No sealed Developer ID artifact is on disk. spctl cannot produce a meaningful accept result until signing and notarization exist.",
+    "prerequisiteChain": [
+      "Developer ID Application identity",
+      "hardened-runtime signed and sealed .app, including nested Electron helpers",
+      "notarization accepted",
+      "staple or online notarization ticket",
+      "spctl -a -vvv -t install on that artifact"
+    ],
+    "osGatekeeperDisabled": false,
+    "adhocIsNotPass": true
+  },
+  "notarization": {
+    "submittedThisPhase": false,
+    "notarytoolAvailable": true,
+    "staplerAvailable": false,
+    "credentialsUnset": ["APPLE_ID", "APPLE_APP_SPECIFIC_PASSWORD", "APPLE_TEAM_ID", "APPLE_API_KEY", "APPLE_API_KEY_ID", "APPLE_API_ISSUER", "APPLE_KEYCHAIN", "APPLE_KEYCHAIN_PROFILE"],
+    "workflow": "electron-builder notarize integration after a Developer ID signature. Preferred credential path is App Store Connect API key via APPLE_API_KEY, APPLE_API_KEY_ID, APPLE_API_ISSUER. Alternate path is APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID. Record the notarytool submission id and staple result. Do not store credentials in source.",
+    "requiredPackageFormat": [".app inside .dmg and/or .zip"],
+    "requiredEntitlements": "existing build/entitlements.mac.plist",
+    "requiredHardenedRuntime": true
+  },
+  "wireguard": {
+    "classification": "READY_FOR_ENVIRONMENT_SETUP",
+    "socket": "/var/run/nexa-vpn-helper.sock",
+    "binariesExpected": ["wg", "wg-quick"],
+    "searchPaths": ["/usr/bin", "/usr/local/bin", "/opt/homebrew/bin"],
+    "bundled": false,
+    "helperSource": "src/helper/main.ts",
+    "helperPackagedByElectronBuilder": false,
+    "architecture": "arm64 host; helper source is platform-generic TypeScript, no compiled arm64 helper binary in the tree",
+    "privilege": "SMAppService privileged helper, socket mode 0600, root-owned",
+    "signing": "Developer ID Application on app and helper, same team, hardened runtime, notarized, SMPrivilegedExecutables/SMAuthorizedClients requirements"
+  },
+  "oauth": {
+    "providersImplemented": ["Google Drive desktop OAuth"],
+    "callback": "http://127.0.0.1:<ephemeral-port>/oauth2/callback",
+    "redirectScheme": "loopback http only",
+    "state": "required; constant-time comparison",
+    "pkce": "S256",
+    "nonce": "not implemented as a separate OIDC nonce",
+    "tokenStorage": "Electron safeStorage via SecureStorage key drive:tokens:<profileId>",
+    "env": ["NEXA_GOOGLE_CLIENT_ID", "NEXA_GOOGLE_CLIENT_SECRET optional"],
+    "envPresent": false,
+    "syntheticTestRequired": "Google OAuth client restricted to loopback redirect, plus a synthetic Google account. Credentials injected only as process environment, never in source."
+  },
+  "externalServices": {
+    "ollama": {
+      "implemented": true,
+      "requiredForCoreBrowser": false,
+      "optional": true,
+      "featureGated": "default local AI provider; offline is an honest state",
+      "config": "fixed http://127.0.0.1:11434",
+      "minimumTest": "service up, synthetic non-PHI model available, status CONNECTED only after a real response",
+      "blocksCoreReleaseVerification": false,
+      "blocksOptionalFeatureVerification": true
+    },
+    "googleDrive": {
+      "implemented": true,
+      "requiredForCoreBrowser": false,
+      "optional": true,
+      "featureGated": "NOT_CONFIGURED when NEXA_GOOGLE_CLIENT_ID is absent",
+      "config": ["NEXA_GOOGLE_CLIENT_ID", "NEXA_GOOGLE_CLIENT_SECRET"],
+      "minimumTest": "live loopback OAuth with a synthetic account, then one Drive metadata call; cancelled login must not authenticate",
+      "blocksCoreReleaseVerification": false,
+      "blocksOptionalFeatureVerification": true
+    },
+    "openai": {
+      "implemented": true,
+      "requiredForCoreBrowser": false,
+      "optional": true,
+      "featureGated": "NOT_CONFIGURED until a key is stored in safeStorage",
+      "config": "operator-entered key, not an environment variable",
+      "endpoint": "https://api.openai.com",
+      "minimumTest": "synthetic key, GET /v1/models returns real CONNECTED; absent key stays NOT_CONFIGURED",
+      "blocksCoreReleaseVerification": false,
+      "blocksOptionalFeatureVerification": true
+    },
+    "anthropic": {
+      "implemented": true,
+      "requiredForCoreBrowser": false,
+      "optional": true,
+      "featureGated": "NOT_CONFIGURED until a key is stored in safeStorage",
+      "config": "operator-entered key, not an environment variable",
+      "endpoint": "https://api.anthropic.com",
+      "minimumTest": "synthetic key, GET /v1/models returns real CONNECTED; absent key stays NOT_CONFIGURED",
+      "blocksCoreReleaseVerification": false,
+      "blocksOptionalFeatureVerification": true
+    }
+  },
+  "permissions": {
+    "handler": "src/main/security/permissions.ts via isPermissionAllowed",
+    "osPromptImplemented": false,
+    "allowedWithoutPrompt": ["clipboard-sanitized-write", "notifications", "fullscreen", "pointerLock"],
+    "deniedWithoutPrompt": ["geolocation", "media", "mediaKeySystem", "midi", "midiSysex", "hid", "serial", "usb", "openExternal", "idle-detection", "display-capture", "speaker-selection", "window-management", "keyboardLock", "clipboard-read", "storage-access", "top-level-storage-access", "fileSystem", "unknown"],
+    "liveTest": "In the packaged app, request each class in a real page. Expect deny with no grant for the denied list. Expect grant without a consent dialog for the allowed list. Do not edit the OS permission database."
+  },
+  "gui": {
+    "canExecuteNow": false,
+    "missingAccess": ["screen recording for window capture", "assistive access for UI driving"],
+    "requiredArtifact": "sealed Developer ID signed and notarized dist/mac-arm64/NEXA.app",
+    "syntheticData": "two profiles named Profile-A and Profile-B; marker tab text only; no personal accounts"
+  },
+  "sourceIdentity": {
+    "status": "SOURCE_COMMIT_UNAVAILABLE",
+    "git": false,
+    "sourceCommitFile": false,
+    "packageVersion": "0.1.0"
+  },
+  "securityPreservation": {
+    "status": "NO_REGRESSION_REQUIRED",
+    "mustNotChange": [
+      "SEC-1 deny-by-default",
+      "profile isolation",
+      "private-tab persistence",
+      "extension host restrictions",
+      "debugger restrictions",
+      "file/chrome/javascript restrictions",
+      "profile-id traversal protection",
+      "clipboard clear-if-unchanged",
+      "cookie partition isolation"
+    ],
+    "note": "Existing Electron hardened-runtime entitlements are packaging configuration. This plan does not add entitlements, disable Gatekeeper, or disable hardened runtime."
+  },
+  "nextActions": [
+    "Do not start a git repository in the product tree unless a separate source-control decision is made. Record SOURCE_COMMIT_UNAVAILABLE until a real commit exists.",
+    "Install full Xcode and point xcode-select at it so stapler and xcodebuild work. notarytool is already present via Command Line Tools.",
+    "Obtain a Developer ID Application certificate for the distribution team. Do not use the Apple Development identity as the release signature. Inject it with CSC_NAME or CSC_LINK outside source.",
+    "Obtain notarization credentials outside source, preferably APPLE_API_KEY, APPLE_API_KEY_ID, and APPLE_API_ISSUER.",
+    "Run the existing package:mac script only in a later phase, after the identity is present. Expect dist/mac-arm64/NEXA.app plus DMG and ZIP. Do not treat an adhoc app as the release artifact.",
+    "Sign nested Electron helpers and frameworks through electron-builder. Do not stop at the main executable.",
+    "Notarize the DMG or ZIP, record the notarytool submission id, staple, then run codesign --verify --deep --strict and spctl -a -vvv -t install. Do not disable Gatekeeper.",
+    "Grant the operator screen recording and assistive access, then execute the GUI, private-mode, profile-isolation, negative-navigation, and live permission procedures on that sealed artifact.",
+    "For WireGuard, separately build and Developer ID-sign the helper, install it with SMAppService, and install system wg and wg-quick. Do not bundle an unsigned helper or simulate a tunnel.",
+    "For optional features only: provide loopback Google OAuth credentials and a synthetic account, start Ollama, and enter synthetic OpenAI/Anthropic keys through the app secure-storage path. Their absence is not a core browser failure, but it still leaves those RC-2 items BLOCKED."
+  ]
+}

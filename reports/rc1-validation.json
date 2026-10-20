@@ -1,0 +1,137 @@
+{
+  "product": "NEXA",
+  "version": "0.1.0",
+  "suite": "RC-1 runtime validation harness",
+  "electronExpected": "44.4.1",
+  "generatedAt": "2026-10-08T17:43:22.845Z",
+  "decision": "AUTOMATED_PASS_WITH_ENVIRONMENT_BLOCKERS",
+  "unitTestsPreserved": 746,
+  "note": "BLOCKED — ENVIRONMENT results were not executed and are never simulated as PASS. This report is not a release attestation.",
+  "counts": {
+    "pass": 11,
+    "fail": 0,
+    "blockedEnvironment": 9
+  },
+  "checks": [
+    {
+      "id": "electron-44-pin",
+      "area": "Electron 44 runtime",
+      "status": "PASS",
+      "evidence": "Installed electron@44.4.1; package.json declares ^44.4.1."
+    },
+    {
+      "id": "electron-44-clipboard-types",
+      "area": "Async clipboard",
+      "status": "PASS",
+      "evidence": "Electron 44.4.1 type definitions declare clipboard.writeText/readText as Promise-based. Live OS clipboard was not touched."
+    },
+    {
+      "id": "electron-44-binary",
+      "area": "Electron 44 runtime",
+      "status": "PASS",
+      "evidence": "ELECTRON_RUN_AS_NODE probe of the local Electron binary reported 44.4.1. No window was opened."
+    },
+    {
+      "id": "sec1-deny-by-default",
+      "area": "SEC-1",
+      "status": "PASS",
+      "evidence": "isPermissionAllowed grants only clipboard-sanitized-write, notifications, fullscreen, pointerLock; sensitive and unknown permissions return false."
+    },
+    {
+      "id": "sec1-partition-policy",
+      "area": "Permission policy",
+      "status": "PASS",
+      "evidence": "The same deny-by-default handlers were applied to default, persistent, and private session stand-ins. Origin did not widen any decision. This is the typed policy, not a live Chromium prompt."
+    },
+    {
+      "id": "partition-names",
+      "area": "Profile isolation",
+      "status": "PASS",
+      "evidence": "persistPartition and privatePartition are distinct; private partitions are not persistent."
+    },
+    {
+      "id": "sec1-production-wiring",
+      "area": "SEC-1",
+      "status": "PASS",
+      "evidence": "Production main process applies the policy to defaultSession and both partition kinds, with hardened webPreferences. No security source was modified by this harness."
+    },
+    {
+      "id": "clipboard-async-source-contract",
+      "area": "Async clipboard",
+      "status": "PASS",
+      "evidence": "Vault copySecret awaits clipboard.writeText, then schedules a 30s readText comparison and clears only if the clipboard still holds that secret. The OS clipboard was not written or read."
+    },
+    {
+      "id": "extension-security-invariants",
+      "area": "Extensions",
+      "status": "PASS",
+      "evidence": "Injected session recorded allowFileAccess:false on persist install and private enable. Private load is skipped while private is off. file/chrome/javascript host patterns are rejected. debugger is BLOCKED and was not loaded. Profile id traversal is refused. Production source has 6 allowFileAccess:false sites. Live Chromium MV3 load was not performed."
+    },
+    {
+      "id": "profile-disk-isolation",
+      "area": "Profile isolation",
+      "status": "PASS",
+      "evidence": "Persistence wrote profile A session into its own directory, did not persist the private tab, and profile B does not load that session. Profile id traversal is refused. This is on-disk file isolation, not a live Chromium cookie jar."
+    },
+    {
+      "id": "unit-suite-boundary",
+      "area": "Test inventory",
+      "status": "PASS",
+      "evidence": "Default vitest include remains tests/unit/**/*.test.ts. This harness is excluded, so it cannot change the existing 746-test count."
+    },
+    {
+      "id": "env-gui",
+      "area": "Live GUI",
+      "status": "BLOCKED — ENVIRONMENT",
+      "evidence": "Real window interaction, first launch, and page rendering were not executed. Not simulated as PASS."
+    },
+    {
+      "id": "env-gatekeeper",
+      "area": "Gatekeeper",
+      "status": "BLOCKED — ENVIRONMENT",
+      "evidence": "Gatekeeper first-launch acceptance was not executed. Not simulated as PASS."
+    },
+    {
+      "id": "env-signing",
+      "area": "Signing / notarization",
+      "status": "BLOCKED — ENVIRONMENT",
+      "evidence": "codesign, notarization, and stapler were not executed. Not simulated as PASS."
+    },
+    {
+      "id": "env-wireguard",
+      "area": "Native WireGuard",
+      "status": "BLOCKED — ENVIRONMENT",
+      "evidence": "No WireGuard handshake, signed helper, or tunnel was started. NOT_CONFIGURED was not fabricated as PROTECTED. Not simulated as PASS."
+    },
+    {
+      "id": "env-oauth",
+      "area": "Live OAuth",
+      "status": "BLOCKED — ENVIRONMENT",
+      "evidence": "No OAuth consent, token exchange, or Google sign-in was performed. Not simulated as PASS."
+    },
+    {
+      "id": "env-external",
+      "area": "External services",
+      "status": "BLOCKED — ENVIRONMENT",
+      "evidence": "Ollama, Google Drive, and a live extension content-script load against example.com were not contacted. Not simulated as PASS."
+    },
+    {
+      "id": "env-os-clipboard",
+      "area": "Async clipboard",
+      "status": "BLOCKED — ENVIRONMENT",
+      "evidence": "The OS clipboard was not written, read, or observed for the 30-second clear. The source contract is a separate check. Not simulated as PASS."
+    },
+    {
+      "id": "env-chromium-cookies",
+      "area": "Profile isolation",
+      "status": "BLOCKED — ENVIRONMENT",
+      "evidence": "Live Chromium cookie/cache isolation between partitions was not observed. On-disk profile files are a separate check. Not simulated as PASS."
+    },
+    {
+      "id": "env-permission-prompts",
+      "area": "Permission policy",
+      "status": "BLOCKED — ENVIRONMENT",
+      "evidence": "A live page geolocation, camera, or display-capture prompt was not observed. Policy decisions are a separate check. Not simulated as PASS."
+    }
+  ]
+}

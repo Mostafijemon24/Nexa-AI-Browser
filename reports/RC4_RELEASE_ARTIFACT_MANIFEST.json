@@ -1,0 +1,81 @@
+{
+  "product": "NEXA",
+  "version": "0.1.0",
+  "electron": "44.4.1",
+  "architecture": "arm64",
+  "sourceCommit": null,
+  "sourceCommitStatus": "SOURCE_COMMIT_UNAVAILABLE",
+  "status": "RC4_BLOCKED_TOOLCHAIN",
+  "alsoBlocked": [
+    "FULL_XCODE_REQUIRED",
+    "DEVELOPER_ID_APPLICATION_REQUIRED",
+    "NOTARIZATION_CREDENTIALS_REQUIRED"
+  ],
+  "artifacts": [],
+  "signing": {
+    "executed": false,
+    "identityRequired": "Developer ID Application",
+    "identityAvailable": false,
+    "appleDevelopmentPresent": true,
+    "appleDevelopmentUsedForRelease": false,
+    "adhocUsedForRelease": false,
+    "cscLink": "unset",
+    "cscName": "unset",
+    "teamIdentifier": null,
+    "hardenedRuntimeConfigured": true,
+    "nestedSignaturesVerified": false
+  },
+  "notarization": {
+    "submitted": false,
+    "credentialsConfigured": false,
+    "submissionId": null,
+    "status": "NOTARIZATION_CREDENTIALS_REQUIRED"
+  },
+  "stapling": {
+    "executed": false,
+    "status": "STAPLING_TOOLCHAIN_BLOCKED"
+  },
+  "gatekeeper": {
+    "assessed": false,
+    "status": "BLOCKED",
+    "osGatekeeperDisabled": false,
+    "quarantineRemovedAsWorkaround": false
+  },
+  "quality": {
+    "reRunThisPhase": false,
+    "lastKnown": {
+      "rc1Validate": "17 passed, 0 failed",
+      "npmTest": "746/746",
+      "typecheck": "PASS",
+      "lint": "PASS",
+      "build": "PASS"
+    },
+    "note": "Release build was not started. Quality gates were not re-run because Phase A/B stopped before Phase G/H."
+  },
+  "securityPreservation": {
+    "SEC-1": "UNCHANGED",
+    "profileIsolation": "UNCHANGED",
+    "privatePersistence": "UNCHANGED",
+    "extensionHostRestrictions": "UNCHANGED",
+    "debuggerDenial": "UNCHANGED",
+    "schemeRejection": "UNCHANGED",
+    "traversalProtection": "UNCHANGED",
+    "clipboardClearing": "UNCHANGED",
+    "cookieIsolation": "UNCHANGED",
+    "securitySourceChanged": false,
+    "productFeatureChanged": false
+  },
+  "environment": {
+    "macos": "27.0",
+    "build": "26A428",
+    "architecture": "arm64",
+    "xcodeSelect": "/Library/Developer/CommandLineTools",
+    "fullXcode": false,
+    "notarytool": "1.1.3 (42)",
+    "electronBuilder": "26.15.3",
+    "node": "v24.17.0",
+    "npm": "11.13.0"
+  },
+  "generatedAt": "2026-09-17T14:37:00Z",
+  "releaseAttestation": "NOT PROVIDED"
+}

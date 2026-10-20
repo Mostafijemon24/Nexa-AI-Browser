@@ -1,0 +1,31 @@
+appId: org.nexa.browser
+productName: NEXA
+directories:
+  output: dist
+files:
+  - out/**/*
+  - assets/**/*
+asar: true
+mac:
+  category: public.app-category.productivity
+  icon: assets/nexa-icon.png
+  # Signing readiness (inert without a Developer ID identity + notarization creds).
+  # electron-builder skips signing entirely when no identity is available, so
+  # unsigned local packaging still works; these activate for a real release.
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  target:
+    - dmg
+    - zip
+win:
+  icon: assets/nexa-icon.png
+  target:
+    - nsis
+linux:
+  icon: assets/nexa-icon.png
+  target:
+    - AppImage
+    - deb
+  category: Network

@@ -1,0 +1,771 @@
+:root {
+  --bg: #e8eaed;
+  --chrome: #e6e8eb;
+  --chrome-2: #dde0e4;
+  --surface: #ffffff;
+  --surface-2: #f5f6f8;
+  --elevated: #ffffff;
+  --border: #dde0e4;
+  --border-2: #c9ced4;
+  --text: #161a20;
+  --text-2: #565e6b;
+  --text-3: #8b93a1;
+  --accent: #4b57e6;
+  --accent-2: color-mix(in srgb, var(--accent) 82%, #000);
+  --accent-weak: color-mix(in srgb, var(--accent) 12%, #fff);
+  --success: #12905a;
+  --success-weak: #e4f4ec;
+  --warning: #a76a09;
+  --warning-weak: #f7efdf;
+  --error: #cf423e;
+  --error-weak: #fbe9e8;
+  --shadow: 0 1px 2px rgba(16, 20, 28, 0.05), 0 6px 20px rgba(16, 20, 28, 0.07);
+  --shadow-lg: 0 18px 50px rgba(16, 20, 28, 0.2);
+  --r: 9px;
+  --addr-bg: var(--surface-2);
+  --addr-backdrop: none;
+  --space: 4px;
+  --dash-pad: 15px;
+
+  /* Semantic interaction-state aliases (resolve per-theme; not new colors) */
+  --surface-hover: var(--surface-2);
+  --surface-active: var(--chrome-2);
+  --on-accent: #ffffff;
+  --focus: var(--accent);
+
+  /* Control sizing scale — single source of truth for control heights */
+  --ctl-h: 34px;
+  --ctl-h-sm: 32px;
+  --field-h: 38px;
+
+  /* Motion scale */
+  --motion-fast: 0.12s;
+  --motion-base: 0.16s;
+  --ease: ease;
+}
+
+[data-theme='dark'] {
+  --bg: #08090b;
+  --chrome: #141619;
+  --chrome-2: #1a1d21;
+  --surface: #141619;
+  --surface-2: #1b1f25;
+  --elevated: #20242b;
+  --border: #282d34;
+  --border-2: #373d46;
+  --text: #eef1f5;
+  --text-2: #9aa3b1;
+  --text-3: #646d7a;
+  --accent: #7c84f5;
+  --accent-2: color-mix(in srgb, var(--accent) 68%, #fff);
+  --accent-weak: color-mix(in srgb, var(--accent) 22%, #0f131a);
+  --success: #3cbf84;
+  --success-weak: #12271e;
+  --warning: #e0a340;
+  --warning-weak: #2a2113;
+  --error: #f0605c;
+  --error-weak: #2c1618;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 22px 60px rgba(0, 0, 0, 0.66);
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+button:focus-visible,
+input:focus-visible,
+webview:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+input {
+  font: inherit;
+  outline: none;
+  color: inherit;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+h1,
+h2,
+p {
+  text-wrap: pretty;
+}
+
+.mono {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+@keyframes cpop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cslide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cbar {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 32px 0;
+  }
+}
+@keyframes caurora {
+  0% {
+    transform: translate(-6%, -4%) scale(1);
+  }
+  50% {
+    transform: translate(6%, 5%) scale(1.15);
+  }
+  100% {
+    transform: translate(-6%, -4%) scale(1);
+  }
+}
+@keyframes cdrift {
+  0% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(4%, -3%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+[data-motion='smooth'] button,
+[data-motion='expressive'] button {
+  transition: background var(--motion-base) var(--ease), color var(--motion-base) var(--ease),
+    border-color var(--motion-base) var(--ease), filter var(--motion-base) var(--ease),
+    box-shadow var(--motion-base) var(--ease);
+}
+[data-motion='expressive'] button:active {
+  transform: scale(0.97);
+}
+[data-motion='none'] *,
+[data-motion='minimal'] * {
+  animation-duration: 0.001s !important;
+}
+[data-motion='none'] * {
+  transition-duration: 0.001s !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001s !important;
+    transition-duration: 0.001s !important;
+  }
+}
+
+/* Inline spinner (respects the reduced-motion + [data-motion] guards above). */
+@keyframes nxspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: nxspin 0.9s linear infinite;
+}
+
+/* STEP 9 — subtle, non-blocking navigation progress (no fake percentage). */
+@keyframes nxnavprog {
+  0% {
+    left: -40%;
+    width: 40%;
+  }
+  50% {
+    left: 30%;
+    width: 45%;
+  }
+  100% {
+    left: 100%;
+    width: 40%;
+  }
+}
+.nav-progress-bar {
+  position: absolute;
+  top: 0;
+  left: -40%;
+  height: 100%;
+  width: 40%;
+  background: var(--accent);
+  animation: nxnavprog 1.1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-progress-bar {
+    left: 0;
+    width: 100%;
+    opacity: 0.5;
+    animation: none;
+  }
+}
+
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--text);
+  overflow: hidden;
+  position: relative;
+}
+
+.drag {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.titlebar {
+  height: 42px;
+  flex: none;
+  background: var(--chrome);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 0 78px;
+  gap: 12px;
+}
+
+.tabstrip {
+  height: 40px;
+  flex: none;
+  background: var(--chrome);
+  display: flex;
+  align-items: flex-end;
+  padding: 0 8px;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+}
+/* macOS: when the custom title bar is hidden (default), the native traffic
+   lights sit over the top-left. Reserve space so they never overlap the tabs.
+   Matches the .titlebar left inset for visual consistency. */
+.tabstrip.mac-inset {
+  padding-left: 78px;
+}
+
+/* Tabs compress down to a readable minimum, then the tab row scrolls
+   horizontally (intentional overflow) while "+" stays pinned beside it. */
+.tabs-wrap {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+.tabs-scroll {
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  height: var(--ctl-h-sm);
+  flex: 0 1 172px;
+  min-width: 76px;
+  max-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border-radius: 8px 8px 0 0;
+  border: 1px solid transparent;
+  border-bottom: none;
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease);
+}
+.tab:not(.active):hover {
+  background: var(--surface-hover);
+}
+.tab.active {
+  background: var(--surface);
+  border-color: var(--border);
+}
+/* Per-tab close affordance (default · hover). */
+.tab-x {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.tab-x:hover {
+  background: var(--surface-active);
+  color: var(--text);
+}
+
+.toolbar {
+  height: 50px;
+  flex: none;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+}
+
+.icon-btn {
+  flex: none;
+  width: var(--ctl-h-sm);
+  height: var(--ctl-h-sm);
+  border-radius: 8px;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-btn:hover {
+  background: var(--surface-hover);
+}
+.icon-btn:active {
+  background: var(--surface-active);
+}
+
+.omnibox {
+  flex: 1;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--addr-bg);
+  backdrop-filter: var(--addr-backdrop);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 0 12px;
+  margin: 0 6px;
+  transition: border-color var(--motion-fast) var(--ease), box-shadow var(--motion-fast) var(--ease);
+}
+.omnibox:hover {
+  border-color: var(--border-2);
+}
+/* Address bar is the primary interaction surface — focus the container, not the raw input. */
+.omnibox:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-weak);
+}
+.omnibox input:focus-visible {
+  outline: none;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  position: relative;
+  container: body / inline-size;
+}
+
+/* Right-hand panels (AI, Worker): fluid width so the main area keeps room. */
+.side-panel {
+  width: clamp(300px, 28vw, 380px);
+  flex: none;
+  min-height: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  container-type: inline-size;
+}
+.row.panel-head {
+  height: 50px;
+  flex: none;
+  gap: 9px;
+  padding: 0 12px 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+@container (max-width: 371px) {
+  .side-panel .panel-status-label {
+    display: none;
+  }
+}
+@container (max-width: 330px) {
+  .side-panel .row.panel-head {
+    gap: 4px;
+    padding: 0 8px 0 10px;
+  }
+}
+
+.sidebar {
+  width: 192px;
+  flex: none;
+  background: var(--chrome);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 10px 8px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.sidebar > * {
+  flex-shrink: 0;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: var(--ctl-h);
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+.nav-btn:hover {
+  background: var(--chrome-2);
+}
+.nav-btn.active {
+  color: var(--accent-2);
+  background: var(--accent-weak);
+  font-weight: 600;
+}
+.nav-btn > svg {
+  flex: none;
+}
+.nav-label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Compact icon rail: when open side panels leave the main area short of room,
+   the sidebar keeps every item (icon + tooltip) but drops labels. */
+@container body (max-width: 1279px) {
+  .body:is([data-panels='1'], [data-panels='2']) > .sidebar {
+    width: 56px;
+    padding: 10px 6px;
+  }
+  .body:is([data-panels='1'], [data-panels='2']) > .sidebar :is(.nav-btn, .ai-status) {
+    justify-content: center;
+    padding: 0;
+    gap: 0;
+  }
+  .body:is([data-panels='1'], [data-panels='2']) > .sidebar :is(.nav-label, .nav-group, .nav-extra) {
+    display: none;
+  }
+}
+@container body (min-width: 1280px) and (max-width: 1679px) {
+  .body[data-panels='2'] > .sidebar {
+    width: 56px;
+    padding: 10px 6px;
+  }
+  .body[data-panels='2'] > .sidebar :is(.nav-btn, .ai-status) {
+    justify-content: center;
+    padding: 0;
+    gap: 0;
+  }
+  .body[data-panels='2'] > .sidebar :is(.nav-label, .nav-group, .nav-extra) {
+    display: none;
+  }
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-2);
+}
+
+.truncate {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.statusbar > * {
+  min-width: 0;
+}
+.statusbar {
+  height: 28px;
+  flex: none;
+  border-top: 1px solid var(--border);
+  background: var(--chrome);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 14px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: rgba(8, 10, 14, 0.32);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(1px);
+}
+
+.modal {
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: cpop 0.18s ease;
+}
+
+.popover {
+  position: absolute;
+  z-index: 45;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: cpop 0.16s ease;
+}
+
+/* Click-to-Go suggestions dropdown — a natural extension of the address bar. */
+.omni-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  max-height: 340px;
+  overflow: auto;
+  animation: cpop 0.14s ease;
+}
+
+/* Context / dropdown menu primitives (shell + reusable). */
+.menu {
+  position: fixed;
+  z-index: 71;
+  min-width: 184px;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  padding: 5px;
+  animation: cpop 0.14s ease;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 7px;
+  color: var(--text);
+  font-size: 12.5px;
+  text-align: left;
+}
+.menu-item:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.menu-item.danger {
+  color: var(--error);
+}
+.menu-item .kbd {
+  margin-left: auto;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--text-3);
+}
+.menu-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 6px;
+}
+
+.pill {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.02em;
+  color: var(--text-3);
+  border: 1px solid var(--border-2);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.toast {
+  position: absolute;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  box-shadow: var(--shadow-lg);
+  padding: 11px 15px;
+  animation: cpop 0.2s ease;
+}
+
+.primary {
+  height: var(--ctl-h);
+  padding: 0 18px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.primary:hover {
+  background: var(--accent-2);
+}
+.ghost {
+  height: var(--ctl-h);
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-2);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.ghost:hover {
+  background: var(--surface-hover);
+}
+.ghost:active {
+  background: var(--surface-active);
+}
+
+.field {
+  width: 100%;
+  height: var(--field-h);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.toggle {
+  width: 42px;
+  height: 24px;
+  border-radius: 13px;
+  flex: none;
+  position: relative;
+  background: var(--border-2);
+}
+.toggle.on {
+  background: var(--accent);
+}
+.toggle span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--on-accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.15s;
+}
+.toggle.on span {
+  left: 20px;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+/* Interactive (button) cards — e.g. dashboard widgets. Static info cards
+   (div.row.card in Settings) are unaffected. */
+button.card {
+  transition: background var(--motion-fast) var(--ease), border-color var(--motion-fast) var(--ease);
+}
+button.card:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-2);
+}
+button.card:active {
+  background: var(--surface-active);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.honest {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 8.5px;
+  letter-spacing: 0.02em;
+  color: var(--text-3);
+}
+
+webview {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

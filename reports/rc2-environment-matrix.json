@@ -1,0 +1,128 @@
+[
+  {
+    "id": "RC2-OS-CLIPBOARD",
+    "test": "OS clipboard write, read-back, 30s clear only if unchanged, and no overwrite of newer external content",
+    "status": "PASS",
+    "evidence": "2026-09-17T11:39:16Z: VaultService.copySecret in a real Electron 44.4.1 process wrote NEXA_RC2_CLIPBOARD_TEST. Electron clipboard.readText and /usr/bin/pbpaste both matched (length 23). After 31s both were empty. 2026-09-17T11:43:01Z: copySecret then /usr/bin/pbcopy of NEXA_RC2_CLIPBOARD_EXTERNAL; after 31s both Electron and pbpaste still classified as external-marker, length 27. A concurrent-clipboard run at 11:41Z was discarded and not counted.",
+    "notes": "Executed the production VaultService.copySecret path against the OS pasteboard. Not a mock, not ELECTRON_RUN_AS_NODE, and not a GUI button click. Assistive access was denied, so the in-app copy button was not driven."
+  },
+  {
+    "id": "RC2-CHROMIUM-COOKIES",
+    "test": "Live Electron Chromium cookies for persistent partitions, private partition, and profile isolation",
+    "status": "PASS",
+    "evidence": "Real session.fromPartition on persist:nexa-rc2a, persist:nexa-rc2b, and nexa-private-rc2a. In-process: A did not see B, B did not see A, private did not see A. After flushStore and process restart at 2026-09-17T11:41:01Z: persistent A and B cookies remained; private cookie was absent; A still did not see B. Synthetic name/value only. Isolated userData under /tmp/nexa-rc2/data. User profile data was not read.",
+    "notes": "This is the Chromium session boundary, not the packaged-app GUI profile switcher. GUI profile switching remains a separate BLOCKED item."
+  },
+  {
+    "id": "RC2-GUI",
+    "test": "Packaged-app launch, rendered interactive UI, new tab, navigation, private mode enter/exit, private restart, and profile switching",
+    "status": "BLOCKED",
+    "evidence": "A NEXA process was already running from dist/mac-arm64/NEXA.app (pid 73337). CoreGraphics listed an on-screen window owner=NEXA, 1440x900. screencapture -l 369 failed: could not create image from window. osascript System Events failed: osascript is not allowed assistive access. This phase did not launch, click, navigate, or restart the app. No screenshot was saved.",
+    "notes": "Prerequisite missing: screen recording permission and assistive access. Blocker type: environment/access. Required: a controlled launch of the signed artifact plus permission to capture and drive the window. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-GATEKEEPER",
+    "test": "Gatekeeper assessment of the packaged release artifact",
+    "status": "BLOCKED",
+    "evidence": "spctl -a -vvv -t install dist/mac-arm64/NEXA.app returned: code has no resources but signature indicates they must be present. No dist/*.dmg or dist/*.zip exists. com.apple.quarantine was not present in xattr output; quarantine was not removed. Gatekeeper was not bypassed or disabled.",
+    "notes": "Prerequisite missing: a Developer ID-signed, notarized distributable. Blocker type: release infrastructure. spctl could not complete an accept/reject assessment of a valid signed artifact. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-SIGNING",
+    "test": "Code signature of the distributable artifact",
+    "status": "BLOCKED",
+    "evidence": "codesign -dv on dist/mac-arm64/NEXA.app: Signature=adhoc, TeamIdentifier=not set, Info.plist=not bound, Sealed Resources=none, Identifier=Electron. codesign --verify --deep --strict --verbose=2 failed: code has no resources but signature indicates they must be present. security find-identity showed only Apple Development: mostafijemon24@gmail.com (ZP2GWVSQB9). No Developer ID Application identity. CSC_LINK unset. Mach-O SHA-256 c803dc22bbd4fa3e90c395b43296bda3442c0d1df9d2747985029fa5b1452df2 matches the local Electron binary. Unsigned distribution is not an accepted release requirement.",
+    "notes": "Prerequisite missing: Developer ID Application identity and a sealed signed artifact. Blocker type: release infrastructure. Not counted as PASS. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-NOTARIZATION",
+    "test": "Notarization status of the macOS release artifact",
+    "status": "BLOCKED",
+    "evidence": "stapler validate failed: tool stapler requires Xcode, but active developer directory is /Library/Developer/CommandLineTools. APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, and APPLE_TEAM_ID are unset. No notarization ticket was found because the artifact is not a sealed signed release. CI configuration was not treated as notarization evidence. Release infrastructure was not modified.",
+    "notes": "Prerequisite missing: Xcode stapler, notarization credentials, and a signed artifact. Blocker type: release infrastructure. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-WIREGUARD",
+    "test": "Native WireGuard component, connect, OS network state, disconnect, and honest failure",
+    "status": "BLOCKED",
+    "evidence": "wg and wireguard-go are not on PATH. /var/run/nexa-vpn-helper.sock is absent. No NEXA helper under /Library/LaunchDaemons or /Library/PrivilegedHelperTools. No handshake was started and no connected state was simulated.",
+    "notes": "Prerequisite missing: installed signed privileged helper and a WireGuard config. Blocker type: environment/release infrastructure. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-OAUTH",
+    "test": "Live OAuth redirect, callback, state/nonce, session, logout, and cancelled-login denial",
+    "status": "BLOCKED",
+    "evidence": "No OAuth, Google, OpenAI, or Anthropic credential environment variables were present. No provider redirect was started. No token, cookie, or authenticated state was injected.",
+    "notes": "Prerequisite missing: release OAuth client and a synthetic test account. Blocker type: access/configuration. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-EXTERNAL-OLLAMA",
+    "test": "Local Ollama integration required by the implemented AI path",
+    "status": "BLOCKED",
+    "evidence": "GET http://127.0.0.1:11434/api/tags did not connect (HTTP status 000). No model list was retrieved. The installed SDK/client was not treated as a live PASS.",
+    "notes": "Prerequisite missing: Ollama listening on 127.0.0.1:11434. Blocker type: environment. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-EXTERNAL-GOOGLE-DRIVE",
+    "test": "Google Drive provider used by the implemented download path",
+    "status": "BLOCKED",
+    "evidence": "Drive depends on the live Google OAuth flow. No OAuth credentials or test account were available. No Drive API call was made and no fake token was used.",
+    "notes": "Prerequisite missing: Google OAuth client and synthetic test account. Blocker type: access. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-EXTERNAL-OPENAI",
+    "test": "OpenAI provider used by the implemented multi-provider AI path",
+    "status": "BLOCKED",
+    "evidence": "No OpenAI API key was present in the environment. No API request was sent. Presence of adapter source was not treated as a live PASS.",
+    "notes": "Prerequisite missing: synthetic API credential. Blocker type: access. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-EXTERNAL-ANTHROPIC",
+    "test": "Anthropic provider used by the implemented multi-provider AI path",
+    "status": "BLOCKED",
+    "evidence": "No Anthropic API key was present in the environment. No API request was sent. Presence of adapter source was not treated as a live PASS.",
+    "notes": "Prerequisite missing: synthetic API credential. Blocker type: access. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-PERMISSION-PROMPTS",
+    "test": "Actual OS/browser permission prompts: request, allow, deny, and persistence",
+    "status": "BLOCKED",
+    "evidence": "No OS prompt was produced or observed. Assistive access and screen recording were denied, so a packaged-app page could not be driven. Permission databases were not modified and prompts were not bypassed.",
+    "notes": "Prerequisite missing: ability to observe and answer a real OS prompt on the packaged app. Blocker type: access. Deny-by-default source inspection was not converted to PASS. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-PRIVATE-MODE",
+    "test": "GUI private mode: enter, create state, exit, restart, and confirm private state is not restored",
+    "status": "BLOCKED",
+    "evidence": "The packaged window could not be driven (assistive access denied) and was not restarted by this phase. The separate Chromium private-partition cookie result is not this GUI test and is not counted here.",
+    "notes": "Prerequisite missing: GUI automation or a human operator on the packaged app. Blocker type: access. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-PROFILE-ISOLATION",
+    "test": "Two synthetic GUI profiles: history, bookmarks, session, cookies through the application, and path traversal",
+    "status": "BLOCKED",
+    "evidence": "Profile switching was not performed in the running packaged app. The user Application Support directory was not inspected. Cookie isolation is recorded only under RC2-CHROMIUM-COOKIES. A non-packaged Persistence.saveSession('../other') refusal was not counted as this packaged-app test.",
+    "notes": "Prerequisite missing: GUI control of two synthetic profiles in the packaged app. Blocker type: access. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-NEGATIVE-SECURITY",
+    "test": "Packaged-app rejection of file:, chrome:, javascript:, debugger, profile traversal, and origin widening",
+    "status": "BLOCKED",
+    "evidence": "These actions were not attempted against the running packaged application. No exploit development was performed. Source inspection and the RC-1 harness were not converted to PASS.",
+    "notes": "Prerequisite missing: GUI/drive access to the packaged app without weakening controls. Blocker type: access. Prevents environment verification completion: yes."
+  },
+  {
+    "id": "RC2-SIGNING-WINDOWS",
+    "test": "Windows Authenticode of a Windows distributable",
+    "status": "NOT_APPLICABLE",
+    "evidence": "This verification target is Darwin 27.0 arm64. No Windows installer was the release artifact under test.",
+    "notes": "Irrelevant to the macOS arm64 target of this run. Does not complete or fail the macOS environment gate."
+  },
+  {
+    "id": "RC2-SIGNING-LINUX",
+    "test": "Linux package signing of an AppImage or deb",
+    "status": "NOT_APPLICABLE",
+    "evidence": "This verification target is Darwin 27.0 arm64. No Linux package was the release artifact under test.",
+    "notes": "Irrelevant to the macOS arm64 target of this run. Does not complete or fail the macOS environment gate."
+  }
+]

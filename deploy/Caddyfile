@@ -1,0 +1,34 @@
+{
+	servers {
+		protocols h1 h2
+	}
+}
+
+{$NEXA_AI_DOMAIN} {
+	encode zstd gzip
+
+	@api path /api/*
+	handle @api {
+		request_body {
+			max_size 1MB
+		}
+		reverse_proxy gateway:8787 {
+			# SSE: never buffer streamed tokens.
+			flush_interval -1
+			header_up X-Forwarded-Proto {scheme}
+			transport http {
+				response_header_timeout 180s
+			}
+		}
+	}
+
+	handle {
+		respond 404
+	}
+
+	# Caddy redacts Authorization/Cookie headers in access logs by default.
+	log {
+		output stdout
+		format json
+	}
+}

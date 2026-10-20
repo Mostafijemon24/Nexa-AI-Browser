@@ -1,0 +1,63 @@
+export const FLAGS: Record<string, string> = {
+  US: '🇺🇸', GB: '🇬🇧', DE: '🇩🇪', JP: '🇯🇵', SG: '🇸🇬', CA: '🇨🇦', AU: '🇦🇺', CH: '🇨🇭',
+  BD: '🇧🇩', IN: '🇮🇳', PK: '🇵🇰', LK: '🇱🇰', VN: '🇻🇳', MY: '🇲🇾', ID: '🇮🇩', TH: '🇹🇭',
+  KR: '🇰🇷', HK: '🇭🇰', TW: '🇹🇼', AE: '🇦🇪', SA: '🇸🇦', TR: '🇹🇷', IL: '🇮🇱', FR: '🇫🇷',
+  NL: '🇳🇱', SE: '🇸🇪', ES: '🇪🇸', IT: '🇮🇹', MX: '🇲🇽', BR: '🇧🇷', AR: '🇦🇷', NZ: '🇳🇿',
+  ZA: '🇿🇦', EG: '🇪🇬'
+}
+
+export const VPN_COUNTRIES = [
+  { region: 'South Asia', country: 'Bangladesh', code: 'BD', servers: 6, cities: [{ city: 'Dhaka' }, { city: 'Chattogram' }] },
+  { region: 'South Asia', country: 'India', code: 'IN', servers: 22, cities: [{ city: 'Mumbai' }, { city: 'Delhi' }, { city: 'Bengaluru' }] },
+  { region: 'South Asia', country: 'Pakistan', code: 'PK', servers: 5, cities: [{ city: 'Karachi' }, { city: 'Lahore' }] },
+  { region: 'South Asia', country: 'Sri Lanka', code: 'LK', servers: 2, cities: [{ city: 'Colombo' }] },
+  { region: 'Southeast Asia', country: 'Singapore', code: 'SG', servers: 8, cities: [{ city: 'Singapore' }] },
+  { region: 'Southeast Asia', country: 'Vietnam', code: 'VN', servers: 4, cities: [{ city: 'Ho Chi Minh City' }, { city: 'Hanoi' }] },
+  { region: 'Southeast Asia', country: 'Malaysia', code: 'MY', servers: 5, cities: [{ city: 'Kuala Lumpur' }] },
+  { region: 'Southeast Asia', country: 'Indonesia', code: 'ID', servers: 6, cities: [{ city: 'Jakarta' }] },
+  { region: 'Southeast Asia', country: 'Thailand', code: 'TH', servers: 4, cities: [{ city: 'Bangkok' }] },
+  { region: 'East Asia', country: 'Japan', code: 'JP', servers: 12, cities: [{ city: 'Tokyo' }, { city: 'Osaka' }] },
+  { region: 'East Asia', country: 'South Korea', code: 'KR', servers: 7, cities: [{ city: 'Seoul' }] },
+  { region: 'East Asia', country: 'Hong Kong', code: 'HK', servers: 6, cities: [{ city: 'Hong Kong' }] },
+  { region: 'East Asia', country: 'Taiwan', code: 'TW', servers: 4, cities: [{ city: 'Taipei' }] },
+  { region: 'Middle East', country: 'United Arab Emirates', code: 'AE', servers: 6, cities: [{ city: 'Dubai' }] },
+  { region: 'Middle East', country: 'Saudi Arabia', code: 'SA', servers: 4, cities: [{ city: 'Riyadh' }] },
+  { region: 'Middle East', country: 'Turkey', code: 'TR', servers: 5, cities: [{ city: 'Istanbul' }] },
+  { region: 'Middle East', country: 'Israel', code: 'IL', servers: 3, cities: [{ city: 'Tel Aviv' }] },
+  { region: 'Europe', country: 'United Kingdom', code: 'GB', servers: 12, cities: [{ city: 'London' }, { city: 'Manchester' }] },
+  { region: 'Europe', country: 'Germany', code: 'DE', servers: 18, cities: [{ city: 'Frankfurt' }, { city: 'Berlin' }] },
+  { region: 'Europe', country: 'France', code: 'FR', servers: 10, cities: [{ city: 'Paris' }] },
+  { region: 'Europe', country: 'Netherlands', code: 'NL', servers: 11, cities: [{ city: 'Amsterdam' }] },
+  { region: 'Europe', country: 'Switzerland', code: 'CH', servers: 6, cities: [{ city: 'Zurich' }] },
+  { region: 'Europe', country: 'Sweden', code: 'SE', servers: 7, cities: [{ city: 'Stockholm' }] },
+  { region: 'Europe', country: 'Spain', code: 'ES', servers: 6, cities: [{ city: 'Madrid' }] },
+  { region: 'Europe', country: 'Italy', code: 'IT', servers: 6, cities: [{ city: 'Milan' }] },
+  { region: 'North America', country: 'United States', code: 'US', servers: 26, cities: [{ city: 'New York' }, { city: 'Chicago' }, { city: 'Los Angeles' }] },
+  { region: 'North America', country: 'Canada', code: 'CA', servers: 10, cities: [{ city: 'Toronto' }, { city: 'Vancouver' }] },
+  { region: 'North America', country: 'Mexico', code: 'MX', servers: 4, cities: [{ city: 'Mexico City' }] },
+  { region: 'South America', country: 'Brazil', code: 'BR', servers: 6, cities: [{ city: 'São Paulo' }] },
+  { region: 'South America', country: 'Argentina', code: 'AR', servers: 3, cities: [{ city: 'Buenos Aires' }] },
+  { region: 'Oceania', country: 'Australia', code: 'AU', servers: 5, cities: [{ city: 'Sydney' }] },
+  { region: 'Oceania', country: 'New Zealand', code: 'NZ', servers: 2, cities: [{ city: 'Auckland' }] },
+  { region: 'Africa', country: 'South Africa', code: 'ZA', servers: 3, cities: [{ city: 'Johannesburg' }] },
+  { region: 'Africa', country: 'Egypt', code: 'EG', servers: 2, cities: [{ city: 'Cairo' }] }
+]
+
+export const SETTINGS_NAV = [
+  { id: 'general', group: 'NEXA', title: 'General', icon: 'sliders' },
+  { id: 'profile', group: 'NEXA', title: 'Profile', icon: 'user' },
+  { id: 'regional', group: 'NEXA', title: 'Language & Region', icon: 'globe' },
+  { id: 'passwords', group: 'NEXA', title: 'Password Manager', icon: 'key' },
+  { id: 'appearance', group: 'NEXA', title: 'Appearance', icon: 'palette' },
+  { id: 'browsing', group: 'NEXA', title: 'Browsing', icon: 'compass' },
+  { id: 'turbo', group: 'NEXA', title: 'Turbo & Performance', icon: 'lightning' },
+  { id: 'downloads', group: 'NEXA', title: 'Downloads', icon: 'download' },
+  { id: 'ai', group: 'NEXA', title: 'AI', icon: 'sparkle' },
+  { id: 'cloud', group: 'NEXA', title: 'Cloud', icon: 'cloud' },
+  { id: 'privacy', group: 'NEXA', title: 'Privacy & Security', icon: 'shield' },
+  { id: 'security', group: 'Privacy & Security', title: 'Security Center', icon: 'shield-checkered' },
+  { id: 'protection', group: 'Privacy & Security', title: 'Content Protection', icon: 'shield-star' },
+  { id: 'vpn', group: 'Privacy & Security', title: 'VPN & Network', icon: 'vpn' },
+  { id: 'extensions', group: 'NEXA', title: 'Extensions', icon: 'puzzle' },
+  { id: 'advanced', group: 'NEXA', title: 'Advanced', icon: 'terminal' }
+]

@@ -1,0 +1,38 @@
+# systemd unit for running the gateway without Docker (behind a TLS proxy such
+# as deploy/Caddyfile pointed at 127.0.0.1:8787).
+#   sudo install -D -m 0644 server/dist/index.mjs /opt/nexa-ai-gateway/index.mjs
+#   sudo install -m 0600 server/.env /etc/nexa-ai-gateway.env
+#   sudo systemctl enable --now nexa-ai-gateway
+
+[Unit]
+Description=NEXA AI Gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+StateDirectory=nexa-ai-gateway
+EnvironmentFile=/etc/nexa-ai-gateway.env
+# Pinned on the command line so EnvironmentFile cannot override them.
+ExecStart=/usr/bin/env NODE_ENV=production AI_GATEWAY_HOST=127.0.0.1 PORT=8787 AI_TRUST_PROXY=true AI_DB_PATH=/var/lib/nexa-ai-gateway/nexa-ai.sqlite /usr/bin/node /opt/nexa-ai-gateway/index.mjs
+Restart=on-failure
+RestartSec=3
+KillSignal=SIGTERM
+TimeoutStopSec=20
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=yes
+MemoryDenyWriteExecute=no
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target
