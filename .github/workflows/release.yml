@@ -48,8 +48,9 @@ jobs:
         env:
           # Publishing the Release + assets (provided automatically by Actions).
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Never auto-discover a macOS signing identity in CI; builds are
-          # unsigned unless the signing secrets below are provided.
+          # Never auto-discover a Developer ID from the CI keychain; the macOS
+          # build is ad-hoc signed (electron-builder.yml `identity: '-'`) unless
+          # the real signing secrets below are provided.
           CSC_IDENTITY_AUTO_DISCOVERY: false
           # --- Optional code signing ---------------------------------------
           # electron-builder skips signing when these are absent, so the matrix

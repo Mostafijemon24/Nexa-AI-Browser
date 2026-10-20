@@ -14,21 +14,34 @@ asar: true
 mac:
   category: public.app-category.productivity
   icon: assets/nexa-icon.png
-  # Build UNSIGNED by default: identity null skips code signing (and notarize
-  # false skips notarization) so CI produces a working .dmg/.zip without any
-  # Apple Developer credentials. To ship a signed, notarized build, remove
-  # `identity: null`, set `notarize: true`, and provide the signing secrets
-  # (CSC_LINK / CSC_KEY_PASSWORD / APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD /
-  # APPLE_TEAM_ID) described in the README.
-  identity: null
+  # AD-HOC signed by default: `identity: "-"` seals the bundle with an ad-hoc
+  # signature (no Apple Developer credentials needed). This is required — a
+  # fully UNSIGNED build (identity null) leaves only Electron's linker stub,
+  # which macOS on Apple Silicon rejects, so the downloaded app is reported as
+  # "damaged and can't be opened" and never launches. Ad-hoc signing fixes that;
+  # users still clear the download quarantine on first launch (see README).
+  # To ship a real signed + notarized build, set `identity` to your Developer ID
+  # name, set `notarize: true` and `hardenedRuntime: true`, and provide the
+  # signing secrets (CSC_LINK / CSC_KEY_PASSWORD / APPLE_ID /
+  # APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID) described in the README.
+  identity: '-'
   notarize: false
-  hardenedRuntime: true
+  # Hardened Runtime is only meaningful for notarized builds and, combined with
+  # ad-hoc signing on electron-builder >= 26.0.13, breaks camera/microphone and
+  # framework library validation. Keep it off for the ad-hoc default.
+  hardenedRuntime: false
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   target:
-    - dmg
-    - zip
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
 win:
   icon: assets/nexa-icon.png
   target:

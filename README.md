@@ -53,10 +53,36 @@ Ready-to-use installers for **Windows, macOS and Linux** are published on the re
 | OS | File |
 |---|---|
 | 🪟 Windows | `NEXA-Setup-<version>.exe` (NSIS installer) |
-| 🍎 macOS | `NEXA-<version>.dmg` / `NEXA-<version>-mac.zip` |
+| 🍎 macOS (Apple Silicon) | `NEXA-<version>-arm64.dmg` / `NEXA-<version>-arm64-mac.zip` |
+| 🍎 macOS (Intel) | `NEXA-<version>-x64.dmg` / `NEXA-<version>-x64-mac.zip` |
 | 🐧 Linux | `NEXA-<version>.AppImage` / `nexa_<version>_amd64.deb` |
 
-> Builds are produced automatically by the [Release workflow](.github/workflows/release.yml) whenever a version tag is pushed. Installers are **unsigned** unless code-signing certificates are configured as repository secrets (see [Releasing](#releasing)); unsigned apps may show an OS warning on first launch.
+> Builds are produced automatically by the [Release workflow](.github/workflows/release.yml) whenever a version tag is pushed. They are **ad-hoc signed** (not notarized) unless code-signing certificates are configured as repository secrets (see [Releasing](#releasing)), so the OS shows a warning on first launch — follow the steps below.
+
+### 🍎 Opening on macOS (first launch)
+
+NEXA's macOS builds are **ad-hoc signed but not notarized by Apple**, so Gatekeeper
+blocks the downloaded app the first time. This is expected for an open-source app
+without a paid Apple Developer certificate — the app itself is fine. Pick the Apple
+Silicon (`arm64`) or Intel (`x64`) build to match your Mac, then:
+
+1. Open the `.dmg` and drag **NEXA** to your **Applications** folder.
+2. Clear the download quarantine so macOS will launch it. In **Terminal**, run:
+
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/NEXA.app
+   ```
+
+   Then open NEXA normally. (Alternatively, right-click **NEXA.app → Open → Open**
+   to approve it once — but if macOS still says *"damaged"*, use the `xattr`
+   command above, which removes the quarantine flag that triggers that message.)
+
+> Why this is needed: a downloaded app carries a `com.apple.quarantine` attribute,
+> and because NEXA isn't notarized, Gatekeeper refuses to run it (often with a
+> misleading *"NEXA is damaged and can't be opened"* message). Removing the
+> quarantine attribute lets the ad-hoc signature verify and the app opens. To ship
+> a build that opens with no warning, add Apple signing + notarization secrets (see
+> [Releasing](#releasing)).
 
 ## Getting started (from source)
 
@@ -136,7 +162,11 @@ Design notes and specs live in [`docs/`](docs/).
    ```
 3. The [Release workflow](.github/workflows/release.yml) builds on Windows, macOS and Linux runners and uploads the installers to a GitHub Release.
 
-For **signed** builds, add these repository secrets (the workflow uses them automatically, and skips signing when they are absent):
+Out of the box the macOS build is **ad-hoc signed** (so Apple Silicon can launch it
+after the quarantine step above) but **not notarized**. For a fully trusted,
+notarized build that opens with no warning, add these repository secrets and set
+`identity` to your Developer ID name, `notarize: true` and `hardenedRuntime: true`
+in [`electron-builder.yml`](electron-builder.yml):
 
 | Secret | Platform |
 |---|---|
